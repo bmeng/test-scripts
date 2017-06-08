@@ -177,7 +177,7 @@ test_old_scenarios
 clean_up
 
 
-create_init_egress_router "9999 udp 10.66.141.175\\n8888 tcp 10.3.11.3 2015\\n61.135.218.24"
+create_init_egress_router '9999 udp 10.66.141.175\n8888 tcp 10.3.11.3 2015\n61.135.218.24'
 wait_for_pod_running egress
 get_router_info
 oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
