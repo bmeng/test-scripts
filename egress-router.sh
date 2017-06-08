@@ -145,6 +145,9 @@ oc delete all --all -n $PROJECT ; sleep 20
 }
 
 
+# Delete project before start
+oc delete project $PROJECT ; sleep 20 
+
 if [ $UPDATE_PACKAGES = true ]
 then
         update_packages
