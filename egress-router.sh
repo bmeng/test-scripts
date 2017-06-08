@@ -160,22 +160,25 @@ oc delete all --all -n $PROJECT ; sleep 20
 # Delete project before start
 oc delete project $PROJECT ; sleep 20 
 
+check_ip
+prepare_user
+
 if [ $UPDATE_PACKAGES = true ]
 then
         update_packages
         sync_images
 fi
 
-check_ip
-prepare_user
-create_legacy_egress_router
-wait_for_pod_running egress
-get_router_info
-oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
-wait_for_pod_running hello-pod
-test_old_scenarios
-clean_up
-
+if [ $TEST_OLD_SCENARIOS = true ]
+    then
+    create_legacy_egress_router
+    wait_for_pod_running egress
+    get_router_info
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
+    wait_for_pod_running hello-pod
+    test_old_scenarios
+    clean_up
+fi
 
 create_init_egress_router '9999 udp 10.66.141.175\n8888 tcp 10.3.11.3 2015\n61.135.218.24'
 wait_for_pod_running egress
