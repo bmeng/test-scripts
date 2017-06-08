@@ -81,6 +81,10 @@ function wait_for_pod_running() {
                 sleep 10
                 let COUNT=$COUNT+1
         done
+        if [ $COUNT -eq 20 ]
+            then
+            exit 1
+        fi
 }
 
 function create_init_egress_router() {
