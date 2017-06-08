@@ -1,13 +1,15 @@
 #!/bin/bash
 set -x 
-EGRESS_DEST_EXT=61.135.218.25
-PROJECT=egressproject
-EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
 
 if [ -z $IMAGE_VERSION ]
     then
     IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -o atomic-openshift-3.[0-9].[0-9][0-9] | grep -o 3.[0-9].[0-9][0-9] | uniq`
 fi
+
+EGRESS_DEST_EXT=61.135.218.25
+PROJECT=egressproject
+EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
+
 
 function update_packages() {
 ssh $MASTER_IP "yum update -y && systemctl restart atomic-openshift-master"
