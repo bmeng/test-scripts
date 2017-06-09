@@ -3,7 +3,7 @@ set -x
 
 if [ -z $IMAGE_VERSION ]
     then
-    IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -o atomic-openshift-3.[0-9].[0-9][0-9] | grep -o 3.[0-9].[0-9][0-9] | uniq`
+    IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -oE 'atomic-openshift-3.[0-9].[0-9]{2,3}' | grep -oE '3.[0-9].[0-9]{2,3}' | uniq`
 fi
 
 EGRESS_DEST_EXT=61.135.218.25
@@ -50,7 +50,11 @@ if [ $? -ne 0 ]
         exit 1
 fi
 
-oc delete project $PROJECT ; sleep 20
+oc delete project $PROJECT
+until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
+do 
+  echo "Project Deleted."
+done
 
 # create project
 oc new-project $PROJECT
@@ -157,15 +161,14 @@ function clean_up(){
 oc delete all --all -n $PROJECT ; sleep 20
 }
 
-
-check_ip
-prepare_user
-
 if [ $UPDATE_PACKAGES = true ]
 then
         update_packages
         sync_images
 fi
+
+check_ip
+prepare_user
 
 if [ $TEST_OLD_SCENARIOS = true ]
     then
