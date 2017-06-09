@@ -129,12 +129,11 @@ telnet $EGRESS_IP 22 || true
 }
 
 function test_init_container(){
-oc exec hello-pod -- yes | ncat -u $EGRESS_SVC 7777
-if [ $? -ne 0 ]
-  then
-  echo "Failed to access remote server"
-  exit 1
-fi
+oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+echo
+echo
+echo
 
 oc exec hello-pod -- curl -sL $EGRESS_SVC:2015
 if [ $? -ne 0 ]
