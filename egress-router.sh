@@ -136,8 +136,8 @@ function test_old_scenarios() {
 }
 
 function test_init_container(){
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 7777"
+    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 7777"
     echo
     echo
     echo
