@@ -4,6 +4,8 @@ set -x
 if [ -z $IMAGE_VERSION ]
     then
     IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -oE 'atomic-openshift-3.[0-9].[0-9]{2,3}' | grep -oE '3.[0-9].[0-9]{2,3}' | uniq`
+    sync_images
+    update_packages
 fi
 
 EGRESS_DEST_EXT=61.135.218.25
@@ -160,14 +162,8 @@ function clean_up(){
     oc delete all --all -n $PROJECT ; sleep 20
 }
 
-if [ $UPDATE_PACKAGES = true ]
-then
-    update_packages
-    sync_images
-fi
-
-    check_ip
     prepare_user
+    check_ip
 
 if [ $TEST_OLD_SCENARIOS = true ]
     then
