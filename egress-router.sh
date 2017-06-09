@@ -50,6 +50,8 @@ if [ $? -ne 0 ]
         exit 1
 fi
 
+oc delete project $PROJECT ; sleep 20
+
 # create project
 oc new-project $PROJECT
 if [ $? -ne 0 ]
@@ -155,9 +157,6 @@ function clean_up(){
 oc delete all --all -n $PROJECT ; sleep 20
 }
 
-
-# Delete project before start
-oc delete project $PROJECT ; sleep 20 
 
 check_ip
 prepare_user
