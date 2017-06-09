@@ -28,9 +28,9 @@ function check_ip() {
     #check ip
     ping -c1 $EGRESS_IP
     if [ $? -ne 1 ]
-            then
+        then
         echo "EGRESS IP is being used"
-            exit 1
+        exit 1
     fi
 }
 
@@ -54,8 +54,9 @@ function prepare_user() {
     oc delete project $PROJECT
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
     do 
-        echo "Project Deleted."
+        echo "Waiting for project to be deleted on server"
     done
+    sleep 20
     
     # create project
     oc new-project $PROJECT
