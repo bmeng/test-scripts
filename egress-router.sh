@@ -177,7 +177,7 @@ if [ $TEST_OLD_SCENARIOS = true ]
     clean_up
 fi
 
-    create_init_egress_router '9999 tcp 10.3.11.3 2015\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
+    create_init_egress_router '2015 tcp 10.3.11.3\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
