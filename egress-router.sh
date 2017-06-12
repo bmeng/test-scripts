@@ -1,13 +1,6 @@
 #!/bin/bash
 set -x 
 
-if [ -z $IMAGE_VERSION ]
-    then
-    IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -oE 'atomic-openshift-3.[0-9].[0-9]{2,3}' | grep -oE '3.[0-9].[0-9]{2,3}' | uniq`
-    sync_images
-    update_packages
-fi
-
 EGRESS_DEST_EXT=61.135.218.25
 PROJECT=egressproject
 EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
@@ -199,6 +192,13 @@ EOF
 function clean_up(){
     oc delete all --all -n $PROJECT ; sleep 20
 }
+
+if [ -z $IMAGE_VERSION ]
+    then
+    IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -oE 'atomic-openshift-3.[0-9].[0-9]{2,3}' | grep -oE '3.[0-9].[0-9]{2,3}' | uniq`
+    sync_images
+    update_packages
+fi
 
     prepare_user
     check_ip
