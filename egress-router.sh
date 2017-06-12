@@ -173,7 +173,7 @@ function test_configmap(){
 }
 
 function create_with_configmap() {
-    cat egress-dest.txt << EOF
+    cat << EOF > egress-dest.txt
     # Redirect connection to udp port 9999 to destination IP udp port 9999
     9999 udp 10.66.141.175
     
