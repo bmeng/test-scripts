@@ -158,6 +158,43 @@ function test_init_container(){
     fi
 }
 
+function test_configmap(){
+    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+    echo
+    echo
+    
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:8888
+    if [ $? -ne 0 ]
+        then
+        echo "Failed to access remote server"
+        exit 1
+    fi
+    
+    oc exec hello-pod -- curl -sL $EGRESS_SVC
+    if [ $? -ne 0 ]
+        then
+        echo "Failed to access remote server"
+        exit 1
+    fi
+}
+
+function create_with_configmap() {
+    cat egress-dest.txt << EOF
+    # Redirect connection to udp port 9999 to destination IP udp port 9999
+    9999 udp 10.66.141.175
+    
+    # Redirect connection to tcp port 8888 to detination IP tcp port 2015
+    8888 tcp 10.3.11.3 2015
+    
+    # Fallback IP
+    61.135.218.24
+EOF
+
+    oc create configmap egress-routes --from-file=destination=egress-destination.txt
+
+    oc create -f $URL
+}
 
 function clean_up(){
     oc delete all --all -n $PROJECT ; sleep 20
@@ -167,7 +204,7 @@ function clean_up(){
     check_ip
 
 if [ $TEST_OLD_SCENARIOS = true ]
-    then
+  then
     create_legacy_egress_router
     wait_for_pod_running egress
     get_router_info
@@ -177,6 +214,18 @@ if [ $TEST_OLD_SCENARIOS = true ]
     clean_up
 fi
 
+if [ $TEST_CONFIGMAP = true ]
+  then
+    create_router_with_configmap
+    wait_for_pod_running egress
+    get_router_info
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
+    wait_for_pod_running hello-pod
+    test_configmap
+    clean_up
+
+if [ $TEST_FALLBACK = true ]
+  then
     create_init_egress_router '2015 tcp 10.3.11.3\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress
     get_router_info
@@ -184,9 +233,10 @@ fi
     wait_for_pod_running hello-pod
     test_init_container
     clean_up
+fi
 
-# clean up all
-    oc delete project $PROJECT
+# clean all in the ned
+oc delete project $PROJECT
 
 set +x
 
