@@ -204,7 +204,7 @@ fi
     check_ip
 
 if [ $TEST_OLD_SCENARIOS = true ]
-  then
+then
     create_legacy_egress_router
     wait_for_pod_running egress
     get_router_info
@@ -215,7 +215,7 @@ if [ $TEST_OLD_SCENARIOS = true ]
 fi
 
 if [ $TEST_CONFIGMAP = true ]
-  then
+then
     create_router_with_configmap
     wait_for_pod_running egress
     get_router_info
@@ -223,9 +223,10 @@ if [ $TEST_CONFIGMAP = true ]
     wait_for_pod_running hello-pod
     test_configmap
     clean_up
+fi
 
 if [ $TEST_FALLBACK = true ]
-  then
+then
     create_init_egress_router '2015 tcp 10.3.11.3\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress
     get_router_info
@@ -239,4 +240,3 @@ fi
 oc delete project $PROJECT
 
 set +x
-
