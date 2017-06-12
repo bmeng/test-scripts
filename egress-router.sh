@@ -184,7 +184,7 @@ function create_with_configmap() {
     61.135.218.24
 EOF
 
-    oc create configmap egress-routes --from-file=destination=egress-destination.txt
+    oc create configmap egress-routes --from-file=destination=egress-dest.txt
 
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-configmap.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g" | oc create -f - -n $PROJECT
 }
