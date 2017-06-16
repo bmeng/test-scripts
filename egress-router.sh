@@ -43,8 +43,8 @@ function prepare_user() {
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
     do 
         echo "Waiting for project to be deleted on server"
+        sleep 5
     done
-    sleep 20
     
     # create project
     oc new-project $PROJECT
