@@ -1,10 +1,5 @@
 #!/bin/bash
 set -x 
-
-EGRESS_DEST_EXT=61.135.218.25
-PROJECT=egressproject
-EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
-
 function update_packages() {
     ssh $MASTER_IP "yum update -y && systemctl restart atomic-openshift-master"
     ssh $NODE_IP_1 "yum update -y && systemctl restart atomic-openshift-node"
@@ -199,6 +194,10 @@ if [ -z $IMAGE_VERSION ]
     sync_images
     update_packages
 fi
+
+EGRESS_DEST_EXT=61.135.218.25
+PROJECT=egressproject
+EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
 
     prepare_user
     check_ip
