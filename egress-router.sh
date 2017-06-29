@@ -125,11 +125,11 @@ function test_old_scenarios() {
 }
 
 function test_init_container(){
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 7777"
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 7777"
+    oc exec hello-pod -- bash -c "(echo UDP_TEST `date`) | ncat -u $EGRESS_SVC 7777"
     echo
     echo
     echo
+    ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC:2015
     if [ $? -ne 0 ]
@@ -147,10 +147,11 @@ function test_init_container(){
 }
 
 function test_configmap(){
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
-    oc exec hello-pod -- bash -c "yes | ncat -u $EGRESS_SVC 9999"
+    oc exec hello-pod -- bash -c "(echo UDP_TEST `date`) | ncat -u $EGRESS_SVC 9999"
     echo
     echo
+    echo
+    ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC:8888
     if [ $? -ne 0 ]
