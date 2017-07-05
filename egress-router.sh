@@ -174,7 +174,7 @@ function create_with_configmap() {
     9999 udp 10.66.141.175
     
     # Redirect connection to tcp port 8888 to detination IP tcp port 2015
-    8888 tcp 10.3.11.3 2015
+    8888 tcp 198.12.70.53 2015
     
     # Fallback IP
     61.135.218.24
@@ -227,7 +227,7 @@ fi
 
 if [ $TEST_FALLBACK = true ]
 then
-    create_init_egress_router '2015 tcp 10.3.11.3\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
+    create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
