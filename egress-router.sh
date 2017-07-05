@@ -171,7 +171,7 @@ function test_configmap(){
 function create_with_configmap() {
     cat << EOF > egress-dest.txt
     # Redirect connection to udp port 9999 to destination IP udp port 9999
-    9999 udp 10.66.141.175
+    9999 udp $LOCAL_SERVER
     
     # Redirect connection to tcp port 8888 to detination IP tcp port 2015
     8888 tcp 198.12.70.53 2015
@@ -199,6 +199,7 @@ fi
 EGRESS_DEST_EXT=61.135.218.25
 PROJECT=egressproject
 EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
+LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
 
     prepare_user
     check_ip
@@ -227,7 +228,7 @@ fi
 
 if [ $TEST_FALLBACK = true ]
 then
-    create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
+    create_init_egress_router "2015 tcp 198.12.70.53\\n7777 udp $LOCAL_SERVER 9999\\n61.135.218.24"
     wait_for_pod_running egress
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
