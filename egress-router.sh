@@ -32,7 +32,7 @@ function prepare_user() {
     fi
     
     # login to server
-    oc login https://$MASTER_IP:8443 -u bmeng -p redhat
+    oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=false
     if [ $? -ne 0 ]
         then
         echo "Failed to login"
