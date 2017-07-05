@@ -1,5 +1,10 @@
 #!/bin/bash
 set -x 
+function set_proxy() {
+    export http_proxy=file.rdu.redhat.com:3128
+    export https_proxy=file.rdu.redhat.com:3128
+}
+
 function update_packages() {
     ssh $MASTER_IP "yum update -y && systemctl restart atomic-openshift-master"
     ssh $NODE_IP_1 "yum update -y && systemctl restart atomic-openshift-node"
@@ -188,6 +193,11 @@ EOF
 function clean_up(){
     oc delete all --all -n $PROJECT ; sleep 20
 }
+
+if [ -z $USE_PROXY ]
+    then 
+      set_proxy
+fi
 
 if [ -z $IMAGE_VERSION ]
     then
