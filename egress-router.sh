@@ -217,7 +217,7 @@ fi
 
 if [ $TEST_FALLBACK = true ]
 then
-    create_init_egress_router "2015 tcp 198.12.70.53\\n7777 udp $LOCAL_SERVER 9999\\n61.135.218.24"
+    create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
