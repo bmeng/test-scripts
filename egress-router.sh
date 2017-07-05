@@ -215,17 +215,6 @@ then
     clean_up
 fi
 
-if [ $TEST_CONFIGMAP = true ]
-then
-    create_with_configmap
-    wait_for_pod_running egress
-    get_router_info
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
-    wait_for_pod_running hello-pod
-    test_configmap
-    clean_up
-fi
-
 if [ $TEST_FALLBACK = true ]
 then
     create_init_egress_router "2015 tcp 198.12.70.53\\n7777 udp $LOCAL_SERVER 9999\\n61.135.218.24"
@@ -234,6 +223,17 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod
     test_init_container
+    clean_up
+fi
+
+if [ $TEST_CONFIGMAP = true ]
+then
+    create_with_configmap
+    wait_for_pod_running egress
+    get_router_info
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
+    wait_for_pod_running hello-pod
+    test_configmap
     clean_up
 fi
 
