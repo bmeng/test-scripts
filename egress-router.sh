@@ -51,6 +51,8 @@ function prepare_user() {
         sleep 5
     done
     
+    sleep 5
+
     # create project
     oc new-project $PROJECT
     if [ $? -ne 0 ]
@@ -75,10 +77,11 @@ function create_legacy_egress_router() {
 
 function wait_for_pod_running() {
     local POD=$1
+    local NUM=$2
     TRY=20
     COUNT=0
     while [ $COUNT -lt $TRY ]; do
-        if [ `oc get po -n $PROJECT | grep $POD | grep Running | wc -l` -eq 1 ]; then
+        if [ `oc get po -n $PROJECT | grep $POD | grep Running | wc -l` -eq $NUM ]; then
                 break
         fi
         sleep 10
@@ -94,6 +97,11 @@ function wait_for_pod_running() {
 function create_init_egress_router() {
     local DEST=$1
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | oc create -f - -n $PROJECT
+}
+
+function create_multiple_router_with_nodename() {
+    local DEST=$1
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 2' | oc create -f - -n $PROJECT
 }
 
 function get_router_info() {
@@ -116,7 +124,7 @@ function test_old_scenarios() {
         sleep 20
     done
     
-    wait_for_pod_running egress
+    wait_for_pod_running egress 1
     
     oc exec hello-pod -- curl -sSL $EGRESS_SVC:80
     if [ $? -ne 0 ]
@@ -149,6 +157,15 @@ function test_init_container(){
         echo "Failed to access remote server"
         exit 1
     fi
+}
+
+function test_router_with_nodename() {
+    oc get po -o wide -n $PROJECT
+
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
 }
 
 function test_configmap(){
@@ -217,10 +234,10 @@ LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0
 if [ $TEST_OLD_SCENARIOS = true ]
 then
     create_legacy_egress_router
-    wait_for_pod_running egress
+    wait_for_pod_running egress 1
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
-    wait_for_pod_running hello-pod
+    wait_for_pod_running hello-pod 1
     test_old_scenarios
     clean_up
 fi
@@ -228,10 +245,10 @@ fi
 if [ $TEST_FALLBACK = true ]
 then
     create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
-    wait_for_pod_running egress
+    wait_for_pod_running egress 1
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
-    wait_for_pod_running hello-pod
+    wait_for_pod_running hello-pod 1
     test_init_container
     clean_up
 fi
@@ -239,11 +256,22 @@ fi
 if [ $TEST_CONFIGMAP = true ]
 then
     create_with_configmap
-    wait_for_pod_running egress
+    wait_for_pod_running egress 1
     get_router_info
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
-    wait_for_pod_running hello-pod
+    wait_for_pod_running hello-pod 1
     test_configmap
+    clean_up
+fi
+
+if [ $TEST_MULTIPLE_ROUTERS = true ]
+then
+    create_multiple_router_with_nodename '61.135.218.24'
+    wait_for_pod_running egress 2
+    get_router_info
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
+    wait_for_pod_running hello-pod 1
+    test_router_with_nodename
     clean_up
 fi
 
