@@ -1,6 +1,6 @@
 #!/bin/bash
 source ./color.sh
-set -x 
+
 function set_proxy() {
     export http_proxy=file.rdu.redhat.com:3128
     export https_proxy=file.rdu.redhat.com:3128
@@ -283,4 +283,3 @@ fi
 # clean all in the ned
 oc delete project $PROJECT
 
-set +x
