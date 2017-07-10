@@ -164,9 +164,17 @@ function test_router_with_nodename() {
     oc get po -o wide -n $PROJECT
 
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
+    sleep 5
 }
 
 function test_configmap(){
@@ -234,6 +242,10 @@ LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0
 
 if [ $TEST_OLD_SCENARIOS = true ]
 then
+    echo
+    echo
+    echo
+    echo
     echo -e "${BGreen} Test OLD Scenarios ${NC}"
     create_legacy_egress_router
     wait_for_pod_running egress 1
@@ -241,11 +253,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_old_scenarios
+    echo
+    echo
+    echo
+    echo
     clean_up
 fi
 
 if [ $TEST_FALLBACK = true ]
 then
+    echo
+    echo
+    echo
+    echo
     echo -e "${BGreen} Test init container fallback ${NC}"
     create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress 1
@@ -253,11 +273,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_init_container
+    echo
+    echo
+    echo
+    echo
     clean_up
 fi
 
 if [ $TEST_CONFIGMAP = true ]
 then
+    echo
+    echo
+    echo
+    echo
     echo -e "${BGreen} Test init container configmap ${NC}"
     create_with_configmap
     wait_for_pod_running egress 1
@@ -265,11 +293,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_configmap
+    echo
+    echo
+    echo
+    echo
     clean_up
 fi
 
 if [ $TEST_MULTIPLE_ROUTERS = true ]
 then
+    echo
+    echo
+    echo
+    echo
     echo -e "${BGreen} Test multiple routers ${NC}"
     create_multiple_router_with_nodename '61.135.218.24'
     wait_for_pod_running egress 2
@@ -277,6 +313,10 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_router_with_nodename
+    echo
+    echo
+    echo
+    echo
     clean_up
 fi
 
