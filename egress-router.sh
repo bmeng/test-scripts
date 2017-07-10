@@ -1,4 +1,5 @@
 #!/bin/bash
+source ./color.sh
 set -x 
 function set_proxy() {
     export http_proxy=file.rdu.redhat.com:3128
@@ -22,7 +23,7 @@ function check_ip() {
     ping -c1 $EGRESS_IP
     if [ $? -ne 1 ]
         then
-        echo "EGRESS IP is being used"
+        echo -e "EGRESS IP is being used"
         exit 1
     fi
 }
@@ -32,7 +33,7 @@ function prepare_user() {
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
     if [ $? -ne 0 ]
         then
-        echo "Failed to copy admin kubeconfig"
+        echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
         exit 1
     fi
     
@@ -40,14 +41,14 @@ function prepare_user() {
     oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=false
     if [ $? -ne 0 ]
         then
-        echo "Failed to login"
+        echo -e "${BRed}Failed to login${NC}"
         exit 1
     fi
     
     oc delete project $PROJECT
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
     do 
-        echo "Waiting for project to be deleted on server"
+        echo -e "Waiting for project to be deleted on server"
         sleep 5
     done
     
@@ -57,7 +58,7 @@ function prepare_user() {
     oc new-project $PROJECT
     if [ $? -ne 0 ]
         then
-        echo "Failed to create project"
+        echo -e "${BRed}Failed to create project${NC}"
         exit 1
     fi
     
@@ -65,7 +66,7 @@ function prepare_user() {
     oadm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
         then
-        echo "Failed to grant privileged permission"
+        echo -e "${BRed}Failed to grant privileged permission${NC}"
         exit 1
     fi
 }
@@ -89,7 +90,7 @@ function wait_for_pod_running() {
     done
     if [ $COUNT -eq 20 ]
         then
-        echo "Pod creation failed"
+        echo -e "Pod creation failed"
         exit 1
     fi
 }
@@ -114,7 +115,7 @@ function test_old_scenarios() {
     oc exec hello-pod -- curl -sSL $EGRESS_SVC:80
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
     
@@ -129,7 +130,7 @@ function test_old_scenarios() {
     oc exec hello-pod -- curl -sSL $EGRESS_SVC:80
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
     
@@ -138,23 +139,23 @@ function test_old_scenarios() {
 }
 
 function test_init_container(){
-    oc exec hello-pod -- bash -c "(echo UDP_TEST `date`) | ncat -u $EGRESS_SVC 7777"
-    echo
-    echo
-    echo
+    oc exec hello-pod -- bash -c "(echo -e UDP_TEST `date`) | ncat -u $EGRESS_SVC 7777"
+    echo -e
+    echo -e
+    echo -e
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC:2015
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
 }
@@ -169,23 +170,23 @@ function test_router_with_nodename() {
 }
 
 function test_configmap(){
-    oc exec hello-pod -- bash -c "(echo UDP_TEST `date`) | ncat -u $EGRESS_SVC 9999"
-    echo
-    echo
-    echo
+    oc exec hello-pod -- bash -c "(echo -e UDP_TEST `date`) | ncat -u $EGRESS_SVC 9999"
+    echo -e
+    echo -e
+    echo -e
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC:8888
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
     
     oc exec hello-pod -- curl -sL $EGRESS_SVC
     if [ $? -ne 0 ]
         then
-        echo "Failed to access remote server"
+        echo -e "${BRed}Failed to access remote server${NC}"
         exit 1
     fi
 }
@@ -233,6 +234,7 @@ LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0
 
 if [ $TEST_OLD_SCENARIOS = true ]
 then
+    echo -e "${BGreen} Test OLD Scenarios ${NC}"
     create_legacy_egress_router
     wait_for_pod_running egress 1
     get_router_info
@@ -244,6 +246,7 @@ fi
 
 if [ $TEST_FALLBACK = true ]
 then
+    echo -e "${BGreen} Test init container fallback ${NC}"
     create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress 1
     get_router_info
@@ -255,6 +258,7 @@ fi
 
 if [ $TEST_CONFIGMAP = true ]
 then
+    echo -e "${BGreen} Test init container configmap ${NC}"
     create_with_configmap
     wait_for_pod_running egress 1
     get_router_info
@@ -266,6 +270,7 @@ fi
 
 if [ $TEST_MULTIPLE_ROUTERS = true ]
 then
+    echo -e "${BGreen} Test multiple routers ${NC}"
     create_multiple_router_with_nodename '61.135.218.24'
     wait_for_pod_running egress 2
     get_router_info
