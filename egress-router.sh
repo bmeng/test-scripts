@@ -102,7 +102,9 @@ function create_init_egress_router() {
 
 function create_multiple_router_with_nodename() {
     local DEST=$1
-    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 2' | oc create -f - -n $PROJECT
+    local EGRESS_IP_2=10.66.141.252
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | oc create -f - -n $PROJECT
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP_2#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | sed 's/egress-rc/egress-rc-2/g' |  oc create -f - -n $PROJECT
 }
 
 function get_router_info() {
@@ -164,17 +166,9 @@ function test_router_with_nodename() {
     oc get po -o wide -n $PROJECT
 
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
     oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
-    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
-    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
-    sleep 5
 }
 
 function test_configmap(){
