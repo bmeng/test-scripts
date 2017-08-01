@@ -104,17 +104,20 @@ function test_single_ip(){
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
     echo "
 
-
     "
-    echo -e "$BPurple Cannot access youdao $NC"
+    echo -e "$BBlue Can access youdao $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
-    echo -e "$BBlue Can access baidu $NC"
+    echo -e "$BPurple Cannot access baidu $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
-    echo -e "$BPurple Cannot access youdao $NC"
+    echo -e "$BBlue Can access youdao $NC"
     oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.youdao.com"
-    echo -e "$BBlue Can access baidu $NC"
+    echo -e "$BPurple Cannot access baidu $NC"
     oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com"
     delete_egress_pod
+    echo '
+
+
+    '
 }
 
 function test_CIDR(){
@@ -126,7 +129,6 @@ function test_CIDR(){
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
     echo "
 
-
 "
     echo -e "$BBlue Can access usersys $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -s fedorabmeng.usersys.redhat.com:8080"
@@ -135,6 +137,10 @@ function test_CIDR(){
     echo -e "$BPurple Cannot access baidu $NC"
     oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com"
     delete_egress_pod
+    echo '
+
+
+'
 }
 
 function test_hostname(){
@@ -145,7 +151,6 @@ function test_hostname(){
     get_proxy_ip
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
     echo "
-
 
 "
     echo -e "$BPurple Cannot access usersys $NC"
@@ -159,6 +164,10 @@ function test_hostname(){
     echo -e "$BBlue Can access youdao $NC"
     oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.youdao.com"
     delete_egress_pod
+    echo '
+
+
+'
 }
 
 function test_wildcard(){
@@ -170,7 +179,6 @@ function test_wildcard(){
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
     echo "
 
-
 "
     echo -e "$BPurple Cannot access baidu $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
@@ -181,6 +189,10 @@ function test_wildcard(){
     echo -e "$BBlue Can access youdao $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
     delete_egress_pod
+    echo "
+
+
+"
 }
 
 function test_multiple_lines(){
@@ -191,7 +203,6 @@ function test_multiple_lines(){
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
     get_proxy_ip
     echo "
-
 
 "
     echo -e "$BPurple Cannot access youdao $NC"
@@ -207,6 +218,10 @@ function test_multiple_lines(){
     echo -e "$BBlue Can access ip138 $NC"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.ip138.com"
     delete_egress_pod
+    echo "
+
+
+"
 }
 
 function delete_egress_pod(){
