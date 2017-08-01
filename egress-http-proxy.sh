@@ -96,6 +96,7 @@ function create_pod_for_ping(){
 }
 
 function test_single_ip(){
+    echo -e "$BGreen Test single ip $NC"
     PROXY_DEST=`ping www.youdao.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | uniq`
     create_egress_http_proxy
     wait_for_pod_running egress-http-proxy 1
@@ -107,10 +108,13 @@ function test_single_ip(){
     "
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.youdao.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -skI https://www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -skI https://www.baidu.com"
     delete_egress_pod
 }
 
 function test_CIDR(){
+    echo -e "$BGreen Test CIDR $NC"
     PROXY_DEST="10.66.140.0/23"
     create_egress_http_proxy
     wait_for_pod_running egress-http-proxy 1
@@ -119,14 +123,16 @@ function test_CIDR(){
     echo"
 
 
-    "
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI fedorabmeng.usersys.redhat.com"
+"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -s fedorabmeng.usersys.redhat.com:8080"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -skI https://www.baidu.com"
     delete_egress_pod
 }
 
 function test_hostname(){
-    PROXY_DEST="www.youdao.com\nwww.baidu.com"
+    echo -e "$BGreen Test hostname $NC"
+    PROXY_DEST="www.youdao.com\n        www.baidu.com"
     create_egress_http_proxy
     wait_for_pod_running egress-http-proxy 1
     get_proxy_ip
@@ -134,14 +140,17 @@ function test_hostname(){
     echo"
 
 
-    "
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI fedorabmeng.usersys.redhat.com"
+"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -s fedorabmeng.usersys.redhat.com:8080"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.baidu.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -sI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -sI https://www.youdao.com"
     delete_egress_pod
 }
 
 function test_wildcard(){
+    echo -e "$BGreen Test wildcard $NC"
     PROXY_DEST="*.youdao.com"
     create_egress_http_proxy
     wait_for_pod_running egress-http-proxy 1
@@ -150,15 +159,17 @@ function test_wildcard(){
     echo"
 
 
-    "
+"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -sI https://www.baidu.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI dict.youdao.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.youdao.com"
     delete_egress_pod
 }
 
 function test_multiple_lines(){
-    PROXY_DEST="!www.youdao.com\nipecho.net\nwww.ip138.com\n*"
+    echo -e "$BGreen Test multiple lines $NC"
+    PROXY_DEST="!www.youdao.com\n        ipecho.net\n        www.ip138.com\n        *"
     create_egress_http_proxy
     wait_for_pod_running egress-http-proxy 1
     oc exec egress-http-proxy -- cat /etc/squid/squid.conf
@@ -166,9 +177,11 @@ function test_multiple_lines(){
     echo"
 
 
-    "
+"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -sI https://www.youdao.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl -sI https://www.baidu.com"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI ipecho.net/plain"
     oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl -sI www.ip138.com"
     delete_egress_pod
