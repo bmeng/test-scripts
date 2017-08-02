@@ -106,13 +106,13 @@ function test_single_ip(){
 
     "
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com | grep 200"
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com | grep 403"
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.youdao.com | grep 200"
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com | grep 403"
     delete_egress_pod
     echo '
 
@@ -131,11 +131,11 @@ function test_CIDR(){
 
 "
     echo -e "$BBlue Can access usersys $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -s fedorabmeng.usersys.redhat.com:8080"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -s fedorabmeng.usersys.redhat.com:8080 | grep login"
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com | grep 403"
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -skI https://www.baidu.com | grep 403"
     delete_egress_pod
     echo '
 
@@ -154,15 +154,15 @@ function test_hostname(){
 
 "
     echo -e "$BPurple Cannot access usersys $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -s fedorabmeng.usersys.redhat.com:8080"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -s fedorabmeng.usersys.redhat.com:8080 | grep ACCESS_DENIED"
     echo -e "$BBlue Can access baidu $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com | grep 200"
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com | grep 200"
     echo -e "$BBlue Can access baidu $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com | grep 200"
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.youdao.com | grep 200"
     delete_egress_pod
     echo '
 
@@ -181,13 +181,13 @@ function test_wildcard(){
 
 "
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com | grep 403"
     echo -e "$BPurple Cannot access baidu $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com | grep 403"
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI dict.youdao.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI dict.youdao.com | grep 200"
     echo -e "$BBlue Can access youdao $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com | grep 200"
     delete_egress_pod
     echo "
 
@@ -206,17 +206,17 @@ function test_multiple_lines(){
 
 "
     echo -e "$BPurple Cannot access youdao $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.youdao.com | grep 403"
     echo -e "$BPurple Cannot access youdao $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.youdao.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.youdao.com | grep 403"
     echo -e "$BBlue Can access baidu $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.baidu.com | grep 200"
     echo -e "$BBlue Can access baidu $NC"
-    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com"
+    oc exec hello-pod -- bash -c "https_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI https://www.baidu.com | grep 200"
     echo -e "$BBlue Can access ipecho $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI ipecho.net/plain"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI ipecho.net/plain | grep 200"
     echo -e "$BBlue Can access ip138 $NC"
-    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.ip138.com"
+    oc exec hello-pod -- bash -c "http_proxy=$proxy_ip:8080 curl --connect-timeout 5 -sI www.ip138.com | grep 200"
     delete_egress_pod
     echo "
 
