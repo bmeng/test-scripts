@@ -86,6 +86,7 @@ function wait_for_pod_running() {
 
 function create_legacy_egress_router() {
     #create egress router pod with svc
+    echo -e "$BBlue Create egress router with legacy mode $NC"
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/legacy-egress-router-list.json | sed "s#egress-router-image#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$EGRESS_DEST_EXT#g" | oc create -f - -n $PROJECT
 }
 
@@ -121,6 +122,7 @@ function test_old_scenarios() {
 }
 
 function create_init_egress_router() {
+    echo -e "$BBlue Create egress router with initContainer mode $NC"
     local DEST=$1
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | oc create -f - -n $PROJECT
 }
@@ -148,10 +150,11 @@ function test_init_container(){
 }
 
 function create_multiple_router_with_nodename() {
+    echo -e "$BBlue Create multiple router with single svc on same node $NC"
     local DEST=$1
     local EGRESS_IP_2=10.66.141.252
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | oc create -f - -n $PROJECT
-    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP_2#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | sed 's/egress-rc/egress-rc-2/g;s/egress-svs/ergress-svc-2/g' |  oc create -f - -n $PROJECT
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP_2#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | sed 's/egress-rc/egress-rc-2/g' |  oc create -f - -n $PROJECT
 }
 
 function test_router_with_nodename() {
@@ -168,6 +171,7 @@ function test_router_with_nodename() {
 }
 
 function create_with_configmap() {
+    echo -e "$BBlue Create egress router with config map $NC"
     cat << EOF > egress-dest.txt
     # Redirect connection to udp port 9999 to destination IP udp port 9999
     9999 udp $LOCAL_SERVER
@@ -210,7 +214,7 @@ function test_configmap(){
 }
 
 function clean_up(){
-    echo "$BBlue Delete the egress router pod and svc $NC"
+    echo -e "$BBlue Delete the egress router pod and svc $NC"
     oc delete rc,svc --all -n $PROJECT ; sleep 20
 }
 
@@ -233,6 +237,7 @@ LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0
 prepare_user
 check_ip
 
+echo -e "$BBlue Create hello pod for access $NC"
 oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
 wait_for_pod_running hello-pod 1
 
