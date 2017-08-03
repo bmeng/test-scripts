@@ -6,17 +6,6 @@ function set_proxy() {
     export https_proxy=file.rdu.redhat.com:3128
 }
 
-function update_packages() {
-    ssh $MASTER_IP "yum update -y && systemctl restart atomic-openshift-master"
-    ssh $NODE_IP_1 "yum update -y && systemctl restart atomic-openshift-node"
-    ssh $NODE_IP_2 "yum update -y && systemctl restart atomic-openshift-node"
-}
-
-function sync_images() {
-    ssh bmeng@$LOCAL_REGISTRY sync_images $IMAGE_VERSION
-    ssh root@$NODE_IP_1 /root/sync_images.sh $IMAGE_VERSION
-    ssh root@$NODE_IP_2 /root/sync_images.sh $IMAGE_VERSION
-}
 
 function check_ip() {
     #check ip
@@ -216,14 +205,13 @@ function clean_up(){
 
 if [ -z $USE_PROXY ]
     then 
-      set_proxy
+    set_proxy
 fi
 
 if [ -z $IMAGE_VERSION ]
     then
-    IMAGE_VERSION=v`curl -s http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/RHAOS/AtomicOpenShift/3.6/latest/x86_64/os/Packages/ | grep -oE 'atomic-openshift-3.[0-9].[0-9]{2,3}' | grep -oE '3.[0-9].[0-9]{2,3}' | uniq`
-    sync_images
-    update_packages
+    echo "$BRed Missing image version! $NC"
+    exit 1
 fi
 
 EGRESS_DEST_EXT=61.135.218.25
@@ -236,10 +224,10 @@ LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0
 
 if [ $TEST_OLD_SCENARIOS = true ]
 then
-    echo
-    echo
-    echo
-    echo
+    echo '
+
+
+'
     echo -e "${BGreen} Test OLD Scenarios ${NC}"
     create_legacy_egress_router
     wait_for_pod_running egress 1
@@ -247,19 +235,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_old_scenarios
-    echo
-    echo
-    echo
-    echo
     clean_up
+    echo '
+
+
+'
 fi
 
 if [ $TEST_FALLBACK = true ]
 then
-    echo
-    echo
-    echo
-    echo
+    echo '
+
+
+'
     echo -e "${BGreen} Test init container fallback ${NC}"
     create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
     wait_for_pod_running egress 1
@@ -267,19 +255,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_init_container
-    echo
-    echo
-    echo
-    echo
     clean_up
+    echo '
+
+
+'
 fi
 
 if [ $TEST_CONFIGMAP = true ]
 then
-    echo
-    echo
-    echo
-    echo
+    echo '
+
+
+'
     echo -e "${BGreen} Test init container configmap ${NC}"
     create_with_configmap
     wait_for_pod_running egress 1
@@ -287,19 +275,19 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_configmap
-    echo
-    echo
-    echo
-    echo
     clean_up
+    echo '
+
+
+'
 fi
 
 if [ $TEST_MULTIPLE_ROUTERS = true ]
 then
-    echo
-    echo
-    echo
-    echo
+    echo '
+
+
+'
     echo -e "${BGreen} Test multiple routers ${NC}"
     create_multiple_router_with_nodename '61.135.218.24'
     wait_for_pod_running egress 2
@@ -307,10 +295,10 @@ then
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/pod-for-ping.json
     wait_for_pod_running hello-pod 1
     test_router_with_nodename
-    echo
-    echo
-    echo
-    echo
+    echo '
+
+
+'
     clean_up
 fi
 
