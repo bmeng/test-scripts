@@ -114,8 +114,8 @@ function test_offset(){
     done
 
     echo -e "$BBlue Check the value in keepalived.conf $NC"
-    oc exec `oc get po --config admin.kubeconfig | grep ipf-red | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
-    oc exec `oc get po --config admin.kubeconfig | grep ipf-blue | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
+    oc exec `oc get po --config admin.kubeconfig | grep ipf-red |grep -v deploy| cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
+    oc exec `oc get po --config admin.kubeconfig | grep ipf-blue | grep -v deploy | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
 
     echo -e "$BBlue Create pod svc route for test $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/routing/unsecure/list_for_unsecure.json
