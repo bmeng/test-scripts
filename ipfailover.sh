@@ -7,6 +7,7 @@ NODE2=$NODE_NAME_2
 VIPS=$VIPS
 PROJECT=ipf
 
+
 function prepare_user() {
     #copy admin kubeconfig
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
@@ -15,7 +16,7 @@ function prepare_user() {
         echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
         exit 1
     fi
-    
+
     # login to server
     oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=false
     if [ $? -ne 0 ]
@@ -23,14 +24,14 @@ function prepare_user() {
         echo -e "${BRed}Failed to login${NC}"
         exit 1
     fi
-    
+
     oc delete project $PROJECT
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
-    do 
+    do
         echo -e "Waiting for project to be deleted on server"
         sleep 5
     done
-    
+
     sleep 10
 
     # create project
@@ -40,7 +41,7 @@ function prepare_user() {
         echo -e "${BRed}Failed to create project${NC}"
         exit 1
     fi
-    
+
     #add privileged scc to user
     oadm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
@@ -54,8 +55,8 @@ function expand_ipv4_range(){
     expandedset=()
     local ip1=$(echo "$1" | awk '{print $1}' FS='-')
     local ip2=$(echo "$1" | awk '{print $2}' FS='-')
-    local n 
-  
+    local n
+
     if [ -z "$ip2" ]; then
       expandedset=(${expandedset[@]} "$ip1")
     else
@@ -71,7 +72,7 @@ function expand_ipv4_range(){
 function check_ips(){
     expand_ipv4_range $VIPS
     for i in ${expandedset[@]}
-    do ping -c 1 $i 
+    do ping -c 1 $i
       if [ $? -ne 1 ]
       then
         exit
@@ -88,24 +89,24 @@ function test_offset(){
     # add labels to node
     oc label node $NODE1 ha=red --overwrite --config admin.kubeconfig
     oc label node $NODE2 ha=blue --overwrite --config admin.kubeconfig
-    
+
     # create router on each node
     oadm policy add-scc-to-user hostnetwork -z router --config admin.kubeconfig
     oadm router router-red --selector=ha=red --config admin.kubeconfig
     oadm router router-blue --selector=ha=blue --config admin.kubeconfig
-    
+
     # wait the routers are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy| grep router | grep Running | wc -l` -lt 2 ]
     do
       sleep 5
     done
-    
+
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover for each router
     oadm policy add-scc-to-user privileged -z ipfailover --config admin.kubeconfig
-    oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig
-    oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig
-    
+    oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
+    oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
+
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy | grep ipf | grep Running | wc -l` -lt 2 ]
     do
@@ -113,7 +114,7 @@ function test_offset(){
     done
 
     echo -e "$BBlue Check the value in keepalived.conf $NC"
-    oc exec `oc get po --config admin.kubeconfig | grep ipf-red | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf 
+    oc exec `oc get po --config admin.kubeconfig | grep ipf-red | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
     oc exec `oc get po --config admin.kubeconfig | grep ipf-blue | cut -d " " -f1` --config admin.kubeconfig -- grep -i id /etc/keepalived/keepalived.conf
 
     echo -e "$BBlue Create pod svc route for test $NC"
@@ -122,11 +123,11 @@ function test_offset(){
     do
       sleep 5
     done
-  
+
     echo -e "$BBlue Access the ipfailover via port $NC"
     for i in ${expandedset[@]}
     do
-      set -x 
+      set -x
       curl -s --resolve unsecure.example.com:80:$i http://unsecure.example.com/
       set +x
     done
@@ -137,33 +138,33 @@ function test_svc(){
     # add labels to node
     oc label node $NODE1 ha-service=ha --overwrite --config admin.kubeconfig
     oc label node $NODE2 ha-service=ha --overwrite --config admin.kubeconfig
-    
+
     echo -e "$BBlue Create ha service $NC"
     # create ha service on each node
     oadm policy add-scc-to-user privileged -z default -n $PROJECT --config admin.kubeconfig
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/ha-network-service.json
-    
+
     # wait the endpoints are running
     while [ `oc get pod | grep ha | grep Running | wc -l` -lt 2 ]
     do
       sleep 5
     done
-  
+
     # patch the service
     oc patch svc ha-service -p '{"spec": {"ports": [{"port":9736,"targetPort":8080}]}}'
     oc patch svc ha-service -p '{"spec": {"type":"NodePort"}}'
     local nodeport=`oc get svc ha-service -o jsonpath={.spec.ports[0].nodePort}`
-  
+
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover
-    oadm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig
-  
+    oadm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
+
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep ipf | grep -v deploy | grep Running | wc -l` -lt 2 ]
     do
       sleep 5
     done
-  
+
     echo -e "$BBlue Access the ipfailover via port $NC"
     # access the svc
     for i in ${expandedset[@]:0:2}
@@ -182,7 +183,7 @@ function clean_up(){
     oc delete dc ipf-red --config admin.kubeconfig
     oc delete dc ipf-blue --config admin.kubeconfig
     oc delete dc ipf  --config admin.kubeconfig
-    oc delete all --all 
+    oc delete all --all
     sleep 15
 }
 
