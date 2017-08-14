@@ -6,7 +6,7 @@ NODE1=$NODE_IP_1
 NODE2=$NODE_IP_2
 
 function get_current_plugin() {
-    local plugin_length=`ssh root@$MASTER "oc get clusternetwork | grep default | awk '{print $5}' | wc -m"`
+    local plugin_length=`ssh root@$MASTER 'oc get clusternetwork | grep default | awk -F" " "{print \$5}" | wc -m'`
     if [ $plugin_length -eq 33 ]
     then
       plugin_type=multitenant
@@ -70,15 +70,15 @@ function create_pods() {
     oc new-project $project1
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $project1
     wait_for_pod_running test-rc 2
-    p1pods=(`oc get po -o wide -n $project1 | grep test-rc | awk '{print $1}'`)
-    p1ips=(`oc get po -o wide -n $project1 | grep test-rc | awk '{print $6}'`)
-    p1svc=`oc get svc -n $project1 | grep test-service | awk '{print $2}'`
+    p1pods=(`oc get po -o wide -n $project1 | grep test-rc | awk '{print \$1}'`)
+    p1ips=(`oc get po -o wide -n $project1 | grep test-rc | awk '{print \$6}'`)
+    p1svc=`oc get svc -n $project1 | grep test-service | awk '{print \$2}'`
     oc new-project $project2
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $project2
     wait_for_pod_running test-rc 2
-    p2pods=(`oc get po -o wide -n $project2 | grep test-rc | awk '{print $1}'`)
-    p2ips=(`oc get po -o wide -n $project2 | grep test-rc | awk '{print $6}'`)
-    p2svc=`oc get svc -n $project2 | grep test-service | awk '{print $2}'`
+    p2pods=(`oc get po -o wide -n $project2 | grep test-rc | awk '{print \$1}'`)
+    p2ips=(`oc get po -o wide -n $project2 | grep test-rc | awk '{print \$6}'`)
+    p2svc=`oc get svc -n $project2 | grep test-service | awk '{print \$2}'`
 }
 
 
