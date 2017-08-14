@@ -6,12 +6,12 @@ NODE1=$NODE_IP_1
 NODE2=$NODE_IP_2
 
 function get_current_plugin() {
-    local plugin_length=`ssh root@$MASTER 'oc get clusternetwork | grep default | awk -F" " "{print \$5}" | wc -m'`
-    if [ $plugin_length -eq 33 ]
+    local plugin_length=`ssh root@$MASTER "grep ovs /etc/origin/master/master-config.yaml | wc -m"`
+    if [ $plugin_length -eq 54 ]
     then
       plugin_type=multitenant
       echo "Plugin is multitenant"
-    elif [ $plugin_length -eq 28 ]
+    elif [ $plugin_length -eq 49 ]
     then
       plugin_type=subnet
       echo "Plugin is subnet"
