@@ -69,14 +69,17 @@ function create_pods() {
     oc new-project u1p1
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n u1p1
     wait_for_pod_running test-rc 2 u1p1
-    p1pods=(`oc get po -o wide -n u1p1 | grep test-rc | awk '{print \$1}'`)
-    p1ips=(`oc get po -o wide -n u1p1 | grep test-rc | awk '{print \$6}'`)
+    p1pod1=`oc get po -o wide -n u1p1 | grep test-rc | head -1 | awk '{print \$1}'`
+    p1ip1=`oc get po -o wide -n u1p1 | grep test-rc | head -1 | awk '{print \$6}'`
+    p1ip2=`oc get po -o wide -n u1p1 | grep test-rc | tail -1 | awk '{print \$6}'`
     p1svc=`oc get svc -n u1p1 | grep test-service | awk '{print \$2}'`
+
     oc new-project u1p2
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n u1p2
     wait_for_pod_running test-rc 2 u1p2
-    p2pods=(`oc get po -o wide -n u1p2 | grep test-rc | awk '{print \$1}'`)
-    p2ips=(`oc get po -o wide -n u1p2 | grep test-rc | awk '{print \$6}'`)
+    p2pod1=`oc get po -o wide -n u1p2 | grep test-rc| head -1 | awk '{print \$1}'`
+    p2ip1=`oc get po -o wide -n u1p2 | grep test-rc| head -1 | awk '{print \$6}'`
+    p2ip2=`oc get po -o wide -n u1p2 | grep test-rc| tail -1 | awk '{print \$6}'`
     p2svc=`oc get svc -n u1p2 | grep test-service | awk '{print \$2}'`
 }
 
@@ -84,23 +87,23 @@ function create_pods() {
 function access_pod_svc() {
     oc project u1p1
     #p1pod access p1pod
-    oc exec ${p1pods[0]} -- curl --connect-timeout 2 -s $(p1ips[1]):8080
+    oc exec $p1pod1 -- curl --connect-timeout 2 -s $p1ip2:8080
     #p1pod access p1svc
-    oc exec ${p1pods[0]} -- curl --connect-timeout 2 -s $p1svc:27017
+    oc exec $p1pod1 -- curl --connect-timeout 2 -s $p1svc:27017
     #p1pod access p2pod
-    oc exec ${p1pods[0]} -- curl --connect-timeout 2 -s $(p2ips[1]):8080
+    oc exec $p1pod1 -- curl --connect-timeout 2 -s $p2ip2:8080
     #p1pod access p2svc
-    oc exec ${p1pods[0]} -- curl --connect-timeout 2 -s $p2svc:27017
+    oc exec $p1pod1 -- curl --connect-timeout 2 -s $p2svc:27017
     
     oc project u1p2
     #p2pod access p2pod
-    oc exec ${p2pods[0]} -- curl --connect-timeout 2 -s $(p2ips[1]):8080
+    oc exec $p2pod1 -- curl --connect-timeout 2 -s $p2ip1:8080
     #p2pod access p2svc
-    oc exec ${p2pods[0]} -- curl --connect-timeout 2 -s $p2svc:27017
+    oc exec $p2pod1 -- curl --connect-timeout 2 -s $p2svc:27017
     #p2pod access p1pod
-    oc exec ${p2pods[0]} -- curl --connect-timeout 2 -s $(p1ips[1]):8080
+    oc exec $p2pod1 -- curl --connect-timeout 2 -s $p1ip1:8080
     #p2pod access p1svc
-    oc exec ${p2pods[0]} -- curl --connect-timeout 2 -s $p1svc:27017
+    oc exec $p2pod1 -- curl --connect-timeout 2 -s $p1svc:27017
 }
 
 get_current_plugin
