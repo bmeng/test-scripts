@@ -47,10 +47,11 @@ function switch_to_subnet() {
 function wait_for_pod_running() {
     local POD=$1
     local NUM=$2
+    local PROJ=$3
     TRY=20
     COUNT=0
     while [ $COUNT -lt $TRY ]; do
-        if [ `oc get po -n $PROJECT | grep $POD | grep Running | wc -l` -eq $NUM ]; then
+        if [ `oc get po -n $PROJ | grep $POD | grep Running | wc -l` -eq $NUM ]; then
                 break
         fi
         sleep 10
@@ -67,13 +68,13 @@ function create_pods() {
     oc login https://$MASTER:8443 -u bmeng -p redhat
     oc new-project u1p1
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n u1p1
-    wait_for_pod_running test-rc 2
+    wait_for_pod_running test-rc 2 u1p1
     p1pods=(`oc get po -o wide -n u1p1 | grep test-rc | awk '{print \$1}'`)
     p1ips=(`oc get po -o wide -n u1p1 | grep test-rc | awk '{print \$6}'`)
     p1svc=`oc get svc -n u1p1 | grep test-service | awk '{print \$2}'`
     oc new-project u1p2
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n u1p2
-    wait_for_pod_running test-rc 2
+    wait_for_pod_running test-rc 2 u1p2
     p2pods=(`oc get po -o wide -n u1p2 | grep test-rc | awk '{print \$1}'`)
     p2ips=(`oc get po -o wide -n u1p2 | grep test-rc | awk '{print \$6}'`)
     p2svc=`oc get svc -n u1p2 | grep test-service | awk '{print \$2}'`
