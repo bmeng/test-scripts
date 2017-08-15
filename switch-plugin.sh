@@ -42,6 +42,8 @@ function switch_to_subnet() {
       ssh root@$i "systemctl restart atomic-openshift-node"
       sleep 5
     done
+
+    sleep 60
 }
 
 function wait_for_pod_running() {
@@ -106,6 +108,14 @@ function access_pod_svc() {
     oc exec $p2pod1 -- curl --connect-timeout 2 -s $p1svc:27017
 }
 
+function clean_up(){
+    oc delete project u1p1
+    oc delete project u1p2
+    sleep 5
+}
+
+
+
 get_current_plugin
 
 if [ $plugin_type = multitenant ]
@@ -128,3 +138,4 @@ else
   echo "Plugin type not supported"
   exit 1
 fi
+clean_up
