@@ -177,7 +177,7 @@ function create_with_configmap() {
     9999 udp $LOCAL_SERVER
     
     # Redirect connection to tcp port 8888 to detination IP tcp port 2015
-    8888 tcp 198.12.70.53 2015
+    8888 tcp 45.62.99.61 2015
     
     # Fallback IP
     61.135.218.24
@@ -258,7 +258,7 @@ echo '
 
 '
 echo -e "${BGreen} Test init container fallback ${NC}"
-create_init_egress_router '2015 tcp 198.12.70.53\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
+create_init_egress_router '2015 tcp 45.62.99.61\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
 wait_for_pod_running egress 1
 get_router_info
 test_init_container
