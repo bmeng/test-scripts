@@ -193,3 +193,5 @@ test_offset
 clean_up
 test_svc
 clean_up
+
+oc delete project ipf
