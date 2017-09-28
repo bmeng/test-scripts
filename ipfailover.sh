@@ -92,8 +92,8 @@ function test_offset(){
 
     # create router on each node
     oadm policy add-scc-to-user hostnetwork -z router --config admin.kubeconfig
-    oadm router router-red --selector=ha=red --config admin.kubeconfig
-    oadm router router-blue --selector=ha=blue --config admin.kubeconfig
+    oadm router router-red --selector=ha=red --config admin.kubeconfig --images=openshift3/ose-haproxy-router:$VERSION
+    oadm router router-blue --selector=ha=blue --config admin.kubeconfig --images=openshift3/ose-haproxy-router:$VERSION
 
     # wait the routers are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy| grep router | grep Running | wc -l` -lt 2 ]
