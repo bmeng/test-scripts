@@ -9,6 +9,7 @@ function set_proxy() {
 
 function check_ip() {
     #check ip
+    echo -e "$BBlue Check if the IP is in-use. $NC"
     ping -c1 $EGRESS_IP
     if [ $? -ne 1 ]
         then
@@ -35,6 +36,7 @@ function prepare_user() {
     fi
     
     oc delete project $PROJECT
+    echo -e "$BBlue Delete the project if already existed. $NC"
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
     do 
         echo -e "Waiting for project to be deleted on server"
@@ -52,6 +54,7 @@ function prepare_user() {
     fi
     
     #add privileged scc to user
+    echo -e "$BBlue Add privileged scc to user. $NC"
     oadm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
         then
