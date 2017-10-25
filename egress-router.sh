@@ -41,7 +41,7 @@ function prepare_user() {
         sleep 5
     done
     
-    sleep 5
+    sleep 10
 
     # create project
     oc new-project $PROJECT
