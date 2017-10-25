@@ -133,7 +133,7 @@ function test_init_container(){
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
     echo -e "$BBlue Access hello-openshift $NC"
-    oc exec hello-pod -- curl -sL $EGRESS_SVC:2015 
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:80
     if [ $? -ne 0 ]
         then
         echo -e "${BRed}Failed to access remote server${NC}"
@@ -258,7 +258,7 @@ echo '
 
 '
 echo -e "${BGreen} Test init container fallback ${NC}"
-create_init_egress_router '2015 tcp 45.62.99.61\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
+create_init_egress_router '80 tcp 45.62.99.61\\n7777 udp 10.66.141.175 9999\\n61.135.218.24'
 wait_for_pod_running egress 1
 get_router_info
 test_init_container
