@@ -234,7 +234,7 @@ fi
 
 EGRESS_DEST_EXT=61.135.218.25
 PROJECT=egressproject
-EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
+EGRESS_ROUTER_IMAGE="$LOCAL_REGISTRY/openshift3/ose-egress-router:$IMAGE_VERSION"
 LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
 
 prepare_user
