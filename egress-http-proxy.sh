@@ -1,8 +1,8 @@
 #!/bin/bash
 source ./color.sh
 PROJECT=egresshttpproxy
-EGRESS_ROUTER_IMAGE="openshift3/ose-egress-router:$IMAGE_VERSION"
-EGRESS_HTTP_PROXY_IMAGE="openshift3/ose-egress-http-proxy:$IMAGE_VERSION"
+EGRESS_ROUTER_IMAGE="$LOCAL_REGISTRY/openshift3/ose-egress-router:$IMAGE_VERSION"
+EGRESS_HTTP_PROXY_IMAGE="$LOCAL_REGISTRY/openshift3/ose-egress-http-proxy:$IMAGE_VERSION"
 
 function prepare_user() {
     #copy admin kubeconfig
