@@ -92,8 +92,8 @@ function test_offset(){
 
     # create router on each node
     oadm policy add-scc-to-user hostnetwork -z router --config admin.kubeconfig
-    oadm router router-red --selector=ha=red --config admin.kubeconfig --images=openshift3/ose-haproxy-router:$VERSION
-    oadm router router-blue --selector=ha=blue --config admin.kubeconfig --images=openshift3/ose-haproxy-router:$VERSION
+    oadm router router-red --selector=ha=red --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
+    oadm router router-blue --selector=ha=blue --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
 
     # wait the routers are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy| grep router | grep Running | wc -l` -lt 2 ]
@@ -104,8 +104,8 @@ function test_offset(){
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover for each router
     oadm policy add-scc-to-user privileged -z ipfailover --config admin.kubeconfig
-    oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
-    oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
+    oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
+    oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
 
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy | grep ipf | grep Running | wc -l` -lt 2 ]
@@ -157,7 +157,7 @@ function test_svc(){
 
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover
-    oadm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig --images=openshift3/ose-keepalived-ipfailover:$VERSION
+    oadm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
 
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep ipf | grep -v deploy | grep Running | wc -l` -lt 2 ]

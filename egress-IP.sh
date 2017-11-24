@@ -394,7 +394,7 @@ function test_egressnetworkpolicy_with_egressip(){
     assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
 
-    cat << EOF | oc create -f - --config admin.kubeconfig
+    cat << EOF | oc create -f - --config admin.kubeconfig -n $PROJECT
 {
     "kind": "EgressNetworkPolicy",
     "apiVersion": "v1",
@@ -421,7 +421,7 @@ EOF
     step_fail
     done
 
-    oc patch egressnetworkpolicy -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.145.0/23"},"type":"Deny"}]}}'
+    oc patch egressnetworkpolicy -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.145.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
 
     pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
     for p in ${pod[@]}
