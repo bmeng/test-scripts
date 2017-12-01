@@ -421,7 +421,7 @@ EOF
     step_fail
     done
 
-    oc patch egressnetworkpolicy -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.145.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
+    oc patch egressnetworkpolicy default -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.144.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
 
     pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
     for p in ${pod[@]}
@@ -509,6 +509,7 @@ test_access_egressip
 echo -e "\n\n\n\n"
 test_negative_values
 echo -e "\n\n\n\n"
+sleep 10
 test_egressnetworkpolicy_with_egressip
 echo -e "\n\n\n\n"
 
