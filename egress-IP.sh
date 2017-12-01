@@ -203,8 +203,8 @@ function test_egressip_to_multi_netns(){
     echo -e "$BRed Report bug here $NC"
 
     clean_up_egressIPs
-    oc delete project project2
-    oc delete all --all -n $PROJECT
+    oc delete project project2 --grace-period=0
+    oc delete all --all -n $PROJECT --grace-period=0
     sleep 10
 }
 
@@ -227,7 +227,7 @@ function test_no_node_with_egressip(){
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT
+    oc delete all --all -n $PROJECT --grace-period=0
     sleep 10
 }
 
@@ -252,7 +252,7 @@ function test_pods_through_egressip(){
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT
+    oc delete all --all -n $PROJECT --grace-period=0
     sleep 15
 }
 
@@ -302,7 +302,7 @@ function test_iptables_openflow_rules(){
     ssh root@$OTHER_NODE "dumpflows | grep table=100"
     echo -e "\n"
     
-    oc delete all --all -n $PROJECT
+    oc delete all --all -n $PROJECT --grace-period=0
     sleep 10
 }
 
@@ -325,7 +325,7 @@ function test_multi_egressip(){
     step_pass
     done
 
-    oc delete all --all -n $PROJECT
+    oc delete all --all -n $PROJECT --grace-period=0
     clean_up_egressIPs
     sleep 10
 }
@@ -379,8 +379,8 @@ function test_pods_in_other_project(){
     done
 
     clean_up_egressIPs
-    oc delete project project2
-    oc delete all --all -n $PROJECT
+    oc delete project project2 --grace-period=0
+    oc delete all --all -n $PROJECT --grace-period=0
     sleep 10
 }
 
