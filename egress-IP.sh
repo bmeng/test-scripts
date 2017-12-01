@@ -316,7 +316,7 @@ function test_multi_egressip(){
     elect_egress_node
 
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
-    assign_egressIP_to_netns $PROJECT
+    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
 
     pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
     for p in ${pod[@]}
@@ -509,7 +509,6 @@ test_access_egressip
 echo -e "\n\n\n\n"
 test_negative_values
 echo -e "\n\n\n\n"
-sleep 10
 test_egressnetworkpolicy_with_egressip
 echo -e "\n\n\n\n"
 
