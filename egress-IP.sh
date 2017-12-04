@@ -193,8 +193,8 @@ function test_egressip_to_multi_netns(){
     echo -e "$BBlue Check the node log $NC"
     ssh root@$EGRESS_NODE journalctl -l -u atomic-openshift-node --since \"1 min ago\" | grep -E E[0-9]{4}
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT
     step_fail
@@ -203,8 +203,8 @@ function test_egressip_to_multi_netns(){
     echo -e "$BRed Report bug here $NC"
 
     clean_up_egressIPs
-    oc delete project project2 --grace-period=0
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete project project2 
+    oc delete all --all -n $PROJECT 
     sleep 10
 }
 
@@ -218,16 +218,16 @@ function test_no_node_with_egressip(){
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
 
-    for p in ${pod[@]}
+    for p in ${pod}
     do
     access_external_network $p $PROJECT
     step_fail
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete all --all -n $PROJECT 
     sleep 10
 }
 
@@ -244,15 +244,15 @@ function test_pods_through_egressip(){
     oc scale rc test-rc --replicas=4 -n $PROJECT
     wait_for_pod_running test-rc 4
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT | grep $EGRESS_IP
     step_pass
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete all --all -n $PROJECT 
     sleep 15
 }
 
@@ -302,7 +302,7 @@ function test_iptables_openflow_rules(){
     ssh root@$OTHER_NODE "dumpflows | grep table=100"
     echo -e "\n"
     
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete all --all -n $PROJECT 
     sleep 10
 }
 
@@ -318,14 +318,14 @@ function test_multi_egressip(){
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT | grep $EGRESS_IP
     step_pass
     done
 
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete all --all -n $PROJECT 
     clean_up_egressIPs
     sleep 10
 }
@@ -341,8 +341,8 @@ function test_egressip_to_multi_host(){
 
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT
     step_pass
@@ -369,8 +369,8 @@ function test_pods_in_other_project(){
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n project2
     wait_for_pod_running test-rc 2 project2
 
-    pod=(`oc get po -n project2 -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n project2 | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p project2
     step_pass
@@ -379,8 +379,8 @@ function test_pods_in_other_project(){
     done
 
     clean_up_egressIPs
-    oc delete project project2 --grace-period=0
-    oc delete all --all -n $PROJECT --grace-period=0
+    oc delete project project2 
+    oc delete all --all -n $PROJECT 
     sleep 10
 }
 
@@ -414,8 +414,8 @@ function test_egressnetworkpolicy_with_egressip(){
 }
 EOF
     
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT
     step_fail
@@ -423,8 +423,8 @@ EOF
 
     oc patch egressnetworkpolicy default -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.144.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
 
-    pod=(`oc get po -n $PROJECT -o jsonpath='{.items[*].metadata.name}'`)
-    for p in ${pod[@]}
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
     do
     access_external_network $p $PROJECT
     step_pass
