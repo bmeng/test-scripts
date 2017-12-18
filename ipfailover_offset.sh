@@ -19,9 +19,9 @@ oc label node $node1 ha=red --overwrite
 oc label node $node2 ha=blue --overwrite
 
 # create router on each node
-oadm policy add-scc-to-user hostnetwork -z router
-oadm router router-red --selector=ha=red
-oadm router router-blue --selector=ha=blue
+oc adm policy add-scc-to-user hostnetwork -z router
+oc adm router router-red --selector=ha=red
+oc adm router router-blue --selector=ha=blue
 
 # wait the routers are running
 while [ `oc get pod | grep -v deploy| grep Running | wc -l` -lt 2 ]
@@ -30,9 +30,9 @@ sleep 5
 done
 
 # create ipfailover for each router
-oadm policy add-scc-to-user privileged -z ipfailover
-oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${ip1} --watch-port=80 --replicas=1 --service-account=ipfailover 
-oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${ip2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50
+oc adm policy add-scc-to-user privileged -z ipfailover
+oc adm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${ip1} --watch-port=80 --replicas=1 --service-account=ipfailover 
+oc adm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${ip2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50
 
 # wait the keepaliveds are running
 while [ `oc get pod | grep -v deploy | grep ipf | grep Running | wc -l` -lt 2 ]

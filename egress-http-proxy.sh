@@ -39,7 +39,7 @@ function prepare_user() {
     fi
     
     #add privileged scc to user
-    oadm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
+    oc adm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
         then
         echo -e "${BRed}Failed to grant privileged permission${NC}"

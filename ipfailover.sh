@@ -43,7 +43,7 @@ function prepare_user() {
     fi
 
     #add privileged scc to user
-    oadm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
+    oc adm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
         then
         echo -e "${BRed}Failed to grant privileged permission${NC}"
@@ -91,9 +91,9 @@ function test_offset(){
     oc label node $NODE2 ha=blue --overwrite --config admin.kubeconfig
 
     # create router on each node
-    oadm policy add-scc-to-user hostnetwork -z router --config admin.kubeconfig
-    oadm router router-red --selector=ha=red --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
-    oadm router router-blue --selector=ha=blue --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
+    oc adm policy add-scc-to-user hostnetwork -z router --config admin.kubeconfig
+    oc adm router router-red --selector=ha=red --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
+    oc adm router router-blue --selector=ha=blue --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-haproxy-router:$VERSION
 
     # wait the routers are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy| grep router | grep Running | wc -l` -lt 2 ]
@@ -103,9 +103,9 @@ function test_offset(){
 
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover for each router
-    oadm policy add-scc-to-user privileged -z ipfailover --config admin.kubeconfig
-    oadm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
-    oadm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
+    oc adm policy add-scc-to-user privileged -z ipfailover --config admin.kubeconfig
+    oc adm ipfailover ipf-red --create --selector=ha=red --virtual-ips=${VIP_1} --watch-port=80 --replicas=1 --service-account=ipfailover  --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
+    oc adm ipfailover ipf-blue --create --selector=ha=blue --virtual-ips=${VIP_2} --watch-port=80 --replicas=1 --service-account=ipfailover --vrrp-id-offset=50 --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
 
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy | grep ipf | grep Running | wc -l` -lt 2 ]
@@ -141,7 +141,7 @@ function test_svc(){
 
     echo -e "$BBlue Create ha service $NC"
     # create ha service on each node
-    oadm policy add-scc-to-user privileged -z default -n $PROJECT --config admin.kubeconfig
+    oc adm policy add-scc-to-user privileged -z default -n $PROJECT --config admin.kubeconfig
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/ha-network-service.json
 
     # wait the endpoints are running
@@ -157,7 +157,7 @@ function test_svc(){
 
     echo -e "$BBlue Create ipfailover $NC"
     # create ipfailover
-    oadm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
+    oc adm ipfailover ipf --create --selector=ha-service=ha --virtual-ips=${VIP_1} --watch-port=${nodeport} --replicas=2 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION
 
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep ipf | grep -v deploy | grep Running | wc -l` -lt 2 ]
