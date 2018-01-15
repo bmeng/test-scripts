@@ -177,7 +177,7 @@ function test_only_cluster_admin_can_modify(){
 }
 
 function test_egressip_to_multi_netns(){
-    echo -e "$BBlue Test OCP-15647 Pods will lose external access if the same egressIP is set to multiple netnamespaces and error logs in master. $NC"
+    echo -e "$BBlue Test OCP-15467 Pods will lose external access if the same egressIP is set to multiple netnamespaces and error logs in master. $NC"
     elect_egress_node
 
     oc project $PROJECT
@@ -200,7 +200,7 @@ function test_egressip_to_multi_netns(){
     step_fail
     done
 
-    echo -e "$BRed Report bug here $NC"
+    echo -e "$BRed Bug 1520363 $NC"
 
     clean_up_egressIPs
     oc delete project project2 
