@@ -408,6 +408,12 @@ function test_egressnetworkpolicy_with_egressip(){
                 "to": {
                     "cidrSelector": "10.66.140.0/23"
                 }
+            },
+            {
+                "type": "Deny",
+                "to": {
+                    "cidrSelector": "10.72.12.0/22"
+                }
             }
         ]
     }
@@ -487,6 +493,7 @@ prepare_user
 clean_node_egressIP    
 check_ip
 
+
 test_only_cluster_admin_can_modify
 echo -e "\n\n\n\n"
 test_egressip_to_multi_netns
@@ -512,7 +519,8 @@ echo -e "\n\n\n\n"
 test_egressnetworkpolicy_with_egressip
 echo -e "\n\n\n\n"
 
+
 # clean all in the end
 oc delete project $PROJECT || true
 oc delete project project2 || true
-oc delete egressnetworkpolicy default -n default --config admin.kubeconfig
+oc delete egressnetworkpolicy default -n default --config admin.kubeconfig || true
