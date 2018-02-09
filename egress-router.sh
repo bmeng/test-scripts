@@ -132,6 +132,7 @@ function create_init_egress_router() {
 
 function test_init_container(){
     echo -e "$BBlue Test UDP port 7777 to 9999 $NC"
+    ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker restart ncat-udp"
     oc exec hello-pod -- bash -c "(echo -e UDP_TEST `date`) | ncat -u $EGRESS_SVC 7777"
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
     
@@ -193,6 +194,7 @@ EOF
 
 function test_configmap(){
     echo -e "$BBlue UDP Test port 9999 $NC"
+    ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker restart ncat-udp"
     oc exec hello-pod -- bash -c "(echo -e UDP_TEST `date`) | ncat -u $EGRESS_SVC 9999"
     echo -e
     echo -e
