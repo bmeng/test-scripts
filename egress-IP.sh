@@ -55,7 +55,7 @@ function prepare_user() {
     fi
     
     # login to server
-    oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=false
+    oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=true
     if [ $? -ne 0 ]
         then
         echo -e "${BRed}Failed to login${NC}"
