@@ -259,6 +259,7 @@ function test_pods_through_egressip(){
 function test_node_nic(){
     echo -e "$BBlue Test OCP-15472 The egressIPs will be added to the node's primary NIC when it gets set on hostsubnet and will be removed after gets unset $NC"
 
+    assign_egressIP_to_netns $PROJECT
     assign_egressIP_to_node
     ssh root@$EGRESS_NODE "ip a s | grep $EGRESS_IP"
     step_pass
