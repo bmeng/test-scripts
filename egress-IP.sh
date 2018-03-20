@@ -194,6 +194,8 @@ function test_egressip_to_multi_netns(){
     do
       access_external_network $p $PROJECT
       step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     echo -e "$BRed Bug 1520363 $NC"
@@ -220,6 +222,8 @@ function test_no_node_with_egressip(){
     do
       access_external_network $p $PROJECT
       step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     clean_up_egressIPs
@@ -243,6 +247,8 @@ function test_pods_through_egressip(){
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
+      access_external_network $p $PROJECT 
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
@@ -430,6 +436,8 @@ EOF
     do
       access_external_network $p $PROJECT
       step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     oc patch egressnetworkpolicy default -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.144.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
@@ -497,22 +505,26 @@ function test_add_remove_egressip(){
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
     # sleep some time to wait for the egressIP ready
-    sleep 10
+    sleep 15
 
     for p in ${pod}
     do
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_fail
+      access_external_network $p $PROJECT 
+      step_pass
     done
 
     # add the egressIP back
     assign_egressIP_to_netns $PROJECT
 
     # sleep some time to wait for the egressIP ready
-    sleep 10
+    sleep 15
 
     for p in ${pod}
     do
+      access_external_network $p $PROJECT 
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
@@ -540,7 +552,7 @@ function test_switch_egressip(){
     sleep 15
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $EGRESS_IP
+      access_external_network $p $PROJECT
       step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
@@ -550,7 +562,7 @@ function test_switch_egressip(){
     sleep 15
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      access_external_network $p $PROJECT
       step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP2
       step_pass
@@ -560,7 +572,7 @@ function test_switch_egressip(){
     sleep 15
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $EGRESS_IP3
+      access_external_network $p $PROJECT
       step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP3
       step_pass
@@ -609,6 +621,8 @@ function test_reuse_egressip(){
     do
       access_external_network $p $NEWPROJECT
       step_pass
+      access_external_network $p $NEWPROJECT
+      step_pass
     done
 
     oc delete project $NEWPROJECT
@@ -635,6 +649,8 @@ function test_reuse_egressip(){
 
     for p in ${pod}
     do
+      access_external_network $p $PROJECT
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
