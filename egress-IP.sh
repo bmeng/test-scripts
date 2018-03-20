@@ -10,31 +10,23 @@ function set_proxy() {
 
 function check_ip() {
     #check ip
-    echo -e "$BBlue Check if the IP is in-use. $NC"
-    ping -c1 $EGRESS_IP
-    if [ $? -ne 1 ]
+
+    for ip in $EGRESS_IP $EGRESS_IP2 $EGRESS_IP3
+    do
+      echo -e "$BBlue Check if the IP is in-use. $NC"
+      ping -c1 $ip
+      if [ $? -ne 1 ]
       then
-      echo -e "$BRed EGRESS IP is being used $NC"
-      exit 1
-    fi
-    oc get hostsubnet --config admin.kubeconfig | grep $EGRESS_IP
-    if [ $? -ne 1 ]
-    then
-      echo -e "$BRed EGRESS IP is being used! $NC"
-      exit 1
-    fi
-    ping -c1 $EGRESS_IP2
-    if [ $? -ne 1 ]
+        echo -e "$BRed EGRESS IP is being used $NC"
+        exit 1
+      fi
+      oc get hostsubnet --config admin.kubeconfig | grep $ip
+      if [ $? -ne 1 ]
       then
-      echo -e "$BRed EGRESS IP2 is being used $NC"
-      exit 1
-    fi
-    oc get hostsubnet --config admin.kubeconfig | grep $EGRESS_IP2
-    if [ $? -ne 1 ]
-    then
-      echo -e "$BRed EGRESS IP2 is being used! $NC"
-      exit 1
-    fi
+        echo -e "$BRed EGRESS IP is being used! $NC"
+        exit 1
+      fi
+    done
 }
 
 function clean_node_egressIP() {
@@ -49,34 +41,34 @@ function prepare_user() {
     #copy admin kubeconfig
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
+      exit 1
     fi
-    
+
     # login to server
     oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=true
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to login${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to login${NC}"
+      exit 1
     fi
-    
+
     oc delete project $PROJECT
     echo -e "$BBlue Delete the project if already existed. $NC"
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
-    do 
-        echo -e "Waiting for project to be deleted on server"
-        sleep 5
+    do
+      echo -e "Waiting for project to be deleted on server"
+      sleep 5
     done
     oc delete project project2
     echo -e "$BBlue Delete the project2 if already existed. $NC"
     until [ `oc get project | grep project2 | wc -l` -eq 0 ]
-    do 
-        echo -e "Waiting for project2 to be deleted on server"
-        sleep 5
+    do
+      echo -e "Waiting for project2 to be deleted on server"
+      sleep 5
     done
-    
+
     sleep 10
 
     # create project
@@ -87,11 +79,10 @@ function create_project(){
     local project=$1
     oc new-project $project
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to create project2${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to create project2${NC}"
+      exit 1
     fi
-
 }
 
 function wait_for_pod_running() {
@@ -101,16 +92,16 @@ function wait_for_pod_running() {
     TRY=20
     COUNT=0
     while [ $COUNT -lt $TRY ]; do
-        if [ `oc get po -n ${project:-$PROJECT} | grep $POD | grep Running | wc -l` -eq $NUM ]; then
-          break
-        fi
-        sleep 10
-        let COUNT=$COUNT+1
+      if [ `oc get po -n ${project:-$PROJECT} | grep $POD | grep Running | wc -l` -eq $NUM ]; then
+        break
+      fi
+      sleep 10
+      let COUNT=$COUNT+1
     done
     if [ $COUNT -eq 20 ]
-        then
-        echo -e "Pod creation failed"
-        exit 1
+    then
+      echo -e "Pod creation failed"
+      exit 1
     fi
 }
 
@@ -120,7 +111,7 @@ function step_pass(){
       echo -e "$BRed FAILED! $NC"
     else
       echo -e "$BGreen PASS! $NC"
-    fi                            
+    fi
 }
 
 function step_fail(){
@@ -131,6 +122,7 @@ function step_fail(){
       echo -e "$BRed FAILED! $NC"
     fi
 }
+
 
 function elect_egress_node(){
     EGRESS_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
@@ -152,13 +144,14 @@ function assign_egressIP_to_node(){
 function assign_egressIP_to_netns(){
     echo -e "$BBlue Assign egress IP to the project netnamespace $NC"
     local netns=$1
-    oc patch netnamespace $netns -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
+    local egressip=$2
+    oc patch netnamespace $netns -p "{\"egressIPs\":[\"${egressip:-$EGRESS_IP}\"]}" --config admin.kubeconfig
 }
 
 function access_external_network(){
     echo -e "$BBlue Access external network $NC"
-    local project=$2
     local pod=$1
+    local project=$2
     oc exec $pod -n $project -- curl -sS --connect-timeout 10 $external_service
 }
 
@@ -193,18 +186,21 @@ function test_egressip_to_multi_netns(){
     echo -e "$BBlue Check the node log $NC"
     ssh root@$EGRESS_NODE journalctl -l -u atomic-openshift-node --since \"1 min ago\" | grep -E E[0-9]{4}
 
+    # sleep sometime to make sure the egressIP ready
+    sleep 10
+
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT
-    step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     echo -e "$BRed Bug 1520363 $NC"
 
     clean_up_egressIPs
-    oc delete project project2 
-    oc delete all --all -n $PROJECT 
+    oc delete project project2
+    oc delete all --all -n $PROJECT
     sleep 10
 }
 
@@ -222,12 +218,12 @@ function test_no_node_with_egressip(){
 
     for p in ${pod}
     do
-    access_external_network $p $PROJECT
-    step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT 
+    oc delete all --all -n $PROJECT
     sleep 10
 }
 
@@ -247,12 +243,12 @@ function test_pods_through_egressip(){
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT | grep $EGRESS_IP
-    step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
     done
 
     clean_up_egressIPs
-    oc delete all --all -n $PROJECT 
+    oc delete all --all -n $PROJECT
     sleep 15
 }
 
@@ -302,14 +298,14 @@ function test_iptables_openflow_rules(){
     echo -e "\n"
     ssh root@$OTHER_NODE "ovs-ofctl dump-flows br0 -O openflow13 | grep table=100"
     echo -e "\n"
-    
-    oc delete all --all -n $PROJECT 
+
+    oc delete all --all -n $PROJECT
     sleep 10
 }
 
 function test_multi_egressip(){
     echo -e "$BBlue Test OCP-15474 Only the first element of the EgressIPs array in netNamespace will take effect. $NC"
-    
+
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
@@ -319,14 +315,17 @@ function test_multi_egressip(){
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
 
+    # sleep sometime to make sure the egressIP ready
+    sleep 10
+
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT | grep $EGRESS_IP
-    step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
     done
 
-    oc delete all --all -n $PROJECT 
+    oc delete all --all -n $PROJECT
     clean_up_egressIPs
     sleep 10
 }
@@ -342,13 +341,16 @@ function test_egressip_to_multi_host(){
 
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
 
+    # sleep sometime to make sure the egressIP ready
+    sleep 10
+
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT
-    step_pass
-    access_external_network $p $PROJECT | grep $EGRESS_IP
-    step_fail
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_fail
     done
 
     clean_up_egressIPs
@@ -373,15 +375,15 @@ function test_pods_in_other_project(){
     pod=$(oc get po -n project2 | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p project2
-    step_pass
-    access_external_network $p project2 | grep $EGRESS_IP
-    step_fail
+      access_external_network $p project2
+      step_pass
+      access_external_network $p project2 | grep $EGRESS_IP
+      step_fail
     done
 
     clean_up_egressIPs
-    oc delete project project2 
-    oc delete all --all -n $PROJECT 
+    oc delete project project2
+    oc delete all --all -n $PROJECT
     sleep 10
 }
 
@@ -420,12 +422,15 @@ function test_egressnetworkpolicy_with_egressip(){
     }
 }
 EOF
-    
+
+    # sleep sometime to make sure the egressIP ready
+    sleep 10
+
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT
-    step_fail
+      access_external_network $p $PROJECT
+      step_fail
     done
 
     oc patch egressnetworkpolicy default -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.144.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
@@ -433,10 +438,10 @@ EOF
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-    access_external_network $p $PROJECT
-    step_pass
-    access_external_network $p $PROJECT | grep $EGRESS_IP
-    step_pass
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
     done
 
     clean_up_egressIPs
@@ -474,6 +479,150 @@ function test_negative_values(){
     step_fail
 }
 
+function test_add_remove_egressip(){
+    echo -e "$BBlue Test OCP-18315 [bz1547899] Add the removed egressIP back to the netnamespace would work well. $NC"
+
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+
+    assign_egressIP_to_node
+
+    assign_egressIP_to_netns $PROJECT
+
+    # remove the egressIP on netnamespace
+    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+
+    # sleep some time to wait for the egressIP ready
+    sleep 10
+
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_fail
+    done
+
+    # add the egressIP back
+    assign_egressIP_to_netns $PROJECT
+
+    # sleep some time to wait for the egressIP ready
+    sleep 10
+
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+
+    clean_up_egressIPs
+    oc delete all --all -n $PROJECT
+    sleep 15
+  }
+
+function test_switch_egressip(){
+    echo -e "$BBlue Test OCP-18434 [bz1553297] Should be able to change the egressIP of the project when there are multiple egressIPs set to nodes. $NC"
+
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+
+    elect_egress_node
+
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | tr -d " "`
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
+
+    assign_egressIP_to_netns $PROJECT
+    sleep 10
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP2
+    sleep 5
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
+    done
+
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP3
+    sleep 5
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP3
+      step_pass
+    done
+
+    clean_up_egressIPs
+    oc delete all --all -n $PROJECT
+    sleep 15
+}
+
+function test_reuse_egressip(){
+    echo -e "$BBlue Test OCP-18316 [bz1543786] The egressIPs should work well when re-using the egressIP which is holding by a deleted project. $NC"
+
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+
+    assign_egressIP_to_node
+
+    assign_egressIP_to_netns $PROJECT
+
+    sleep 10
+
+    # delete the project
+    oc delete project $PROJECT
+
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+
+    NEWPROJECT=new$PROJECT
+    create_project $NEWPROJECT
+    oc project $NEWPROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
+    wait_for_pod_running test-rc 2
+    pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
+
+    assign_egressIP_to_node
+
+    sleep 10
+
+    for p in ${pod}
+    do
+      access_external_network $p $NEWPROJECT
+      step_pass
+    done
+
+    oc delete project $NEWPROJECT
+
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+
+    create_project $PROJECT
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+
+    assign_egressIP_to_node
+
+    assign_egressIP_to_netns $PROJECT
+
+    sleep 10
+
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+
+    clean_up_egressIPs
+    oc delete all --all -n $PROJECT
+    sleep 15
+}
 
 function clean_up_resource(){
     echo -e "$BBlue Delete all resources in project $NC"
@@ -481,7 +630,7 @@ function clean_up_resource(){
 }
 
 if [ -z $USE_PROXY ]
-    then 
+    then
     set_proxy
 fi
 
@@ -491,7 +640,7 @@ external_service=$EXTERNAL_SERVICE
 
 
 prepare_user
-clean_node_egressIP    
+clean_node_egressIP
 check_ip
 
 if ( $OCP15465 ); then
@@ -540,6 +689,18 @@ fi
 echo -e "\n\n\n\n"
 if ( $OCP15992 ); then
 test_egressnetworkpolicy_with_egressip
+fi
+echo -e "\n\n\n\n"
+if ( $OCP18315 ); then
+test_add_remove_egressip
+fi
+echo -e "\n\n\n\n"
+if ( $OCP18434 ); then
+test_switch_egressip
+fi
+echo -e "\n\n\n\n"
+if ( $OCP18316 ); then
+test_reuse_egressip
 fi
 echo -e "\n\n\n\n"
 
