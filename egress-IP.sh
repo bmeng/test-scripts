@@ -80,7 +80,7 @@ function create_project(){
     oc new-project $project
     if [ $? -ne 0 ]
     then
-      echo -e "${BRed}Failed to create project2${NC}"
+      echo -e "${BRed}Failed to create $project $NC"
       exit 1
     fi
 }
@@ -316,11 +316,13 @@ function test_multi_egressip(){
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
 
     # sleep sometime to make sure the egressIP ready
-    sleep 10
+    sleep 15
 
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
@@ -423,9 +425,6 @@ function test_egressnetworkpolicy_with_egressip(){
 }
 EOF
 
-    # sleep sometime to make sure the egressIP ready
-    sleep 10
-
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
@@ -434,6 +433,9 @@ EOF
     done
 
     oc patch egressnetworkpolicy default -p '{"spec":{"egress":[{"to":{"cidrSelector":"10.66.144.0/23"},"type":"Deny"}]}}' -n $PROJECT --config admin.kubeconfig
+
+    # sleep sometime to make sure the egressIP ready
+    sleep 15
 
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
@@ -535,25 +537,31 @@ function test_switch_egressip(){
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
 
     assign_egressIP_to_netns $PROJECT
-    sleep 10
+    sleep 15
     for p in ${pod}
     do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
 
     assign_egressIP_to_netns $PROJECT $EGRESS_IP2
-    sleep 5
+    sleep 15
     for p in ${pod}
     do
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP2
       step_pass
     done
 
     assign_egressIP_to_netns $PROJECT $EGRESS_IP3
-    sleep 5
+    sleep 15
     for p in ${pod}
     do
+      access_external_network $p $PROJECT | grep $EGRESS_IP3
+      step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP3
       step_pass
     done
@@ -573,23 +581,29 @@ function test_reuse_egressip(){
 
     assign_egressIP_to_netns $PROJECT
 
-    sleep 10
+    sleep 15
 
     # delete the project
     oc delete project $PROJECT
+    
+    until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
+    do
+      echo -e "Waiting for project to be deleted on server"
+      sleep 5
+    done
 
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
-    NEWPROJECT=new$PROJECT
+    NEWPROJECT=newegress
     create_project $NEWPROJECT
     oc project $NEWPROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
-    wait_for_pod_running test-rc 2
+    wait_for_pod_running test-rc 2 $NEWPROJECT
     pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
 
     assign_egressIP_to_node
 
-    sleep 10
+    sleep 15
 
     for p in ${pod}
     do
@@ -598,6 +612,12 @@ function test_reuse_egressip(){
     done
 
     oc delete project $NEWPROJECT
+
+    until [ `oc get project | grep $NEWPROJECT | wc -l` -eq 0 ]
+    do
+      echo -e "Waiting for project to be deleted on server"
+      sleep 5
+    done
 
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
@@ -611,7 +631,7 @@ function test_reuse_egressip(){
 
     assign_egressIP_to_netns $PROJECT
 
-    sleep 10
+    sleep 15
 
     for p in ${pod}
     do
