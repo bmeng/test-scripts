@@ -240,13 +240,13 @@ function test_egressrouter_with_egressfirewall() {
     }
 }
 EOF
-	oc exec hello-pod -- curl -Iv http://www.youdao.com/ --connect-timeout 5
+	oc exec hello-pod -- curl -s http://www.youdao.com/ --connect-timeout 5
     if [ $? -ne 7 ]
     then
       echo -e "${BRed}Egress network policy does not take effect ${NC}"
       exit 1
     fi
-    oc exec hello-pod -- curl -Iv -H "host: www.youdao.com" $EGRESS_SVC:80
+    oc exec hello-pod -- curl -sI -H "host: www.youdao.com" $EGRESS_SVC:80
     if [ $? -ne 0 ]
     then
       echo -e "${BRed}Failed to access remote server${NC}"
