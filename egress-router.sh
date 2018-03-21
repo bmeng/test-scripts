@@ -12,9 +12,9 @@ function check_ip() {
     echo -e "$BBlue Check if the IP is in-use. $NC"
     ping -c1 $EGRESS_IP
     if [ $? -ne 1 ]
-        then
-        echo -e "EGRESS IP is being used"
-        exit 1
+    then
+      echo -e "EGRESS IP is being used"
+      exit 1
     fi
 }
 
@@ -22,11 +22,11 @@ function prepare_user() {
     #copy admin kubeconfig
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to copy admin kubeconfig${NC}"
+      exit 1
     fi
-    
+
     # login to server
     oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=true
     if [ $? -ne 0 ]
@@ -34,32 +34,32 @@ function prepare_user() {
         echo -e "${BRed}Failed to login${NC}"
         exit 1
     fi
-    
+
     oc delete project $PROJECT
     echo -e "$BBlue Delete the project if already existed. $NC"
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
-    do 
-        echo -e "Waiting for project to be deleted on server"
-        sleep 5
+    do
+      echo -e "Waiting for project to be deleted on server"
+      sleep 5
     done
-    
+
     sleep 10
 
     # create project
     oc new-project $PROJECT
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to create project${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to create project${NC}"
+      exit 1
     fi
-    
+
     #add privileged scc to user
     echo -e "$BBlue Add privileged scc to user. $NC"
     oc adm policy add-scc-to-user privileged system:serviceaccount:$PROJECT:default --config admin.kubeconfig
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to grant privileged permission${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to grant privileged permission${NC}"
+      exit 1
     fi
 }
 
@@ -74,16 +74,16 @@ function wait_for_pod_running() {
     TRY=20
     COUNT=0
     while [ $COUNT -lt $TRY ]; do
-        if [ `oc get po -n $PROJECT | grep $POD | grep Running | wc -l` -eq $NUM ]; then
-                break
-        fi
-        sleep 10
-        let COUNT=$COUNT+1
+      if [ `oc get po -n $PROJECT | grep $POD | grep Running | wc -l` -eq $NUM ]; then
+        break
+      fi
+      sleep 10
+      let COUNT=$COUNT+1
     done
     if [ $COUNT -eq 20 ]
-        then
-        echo -e "Pod creation failed"
-        exit 1
+    then
+      echo -e "Pod creation failed"
+      exit 1
     fi
 }
 
@@ -104,27 +104,27 @@ function test_old_scenarios() {
     echo -e "$BBlue Access youdao  $NC"
     oc exec hello-pod -- curl -IsSL $EGRESS_SVC:80 | grep youdao.com
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
-    
+
     while [ `oc get po -l name=egress-router -o wide | grep Running | awk -F' ' '{print $7}'` = $EGRESS_NODE ]
     do
-        oc delete po -l name=egress-router
-        sleep 20
+      oc delete po -l name=egress-router
+      sleep 20
     done
-    
+
     wait_for_pod_running egress 1
-    
+
     echo -e "$BBlue Access youdao  $NC"
     oc exec hello-pod -- curl -sSIL $EGRESS_SVC:80 | grep youdao.com
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
-    
+
     #connect the node via the egress ip
     echo -e "$BBlue Connect node via egress ip  $NC"
     telnet $EGRESS_IP 22 || true
@@ -135,21 +135,21 @@ function test_init_container(){
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker restart ncat-udp"
     oc exec hello-pod -- bash -c "(echo -e UDP_TEST `date`) | ncat -u $EGRESS_SVC 7777"
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
-    
+
     echo -e "$BBlue Access hello-openshift $NC"
-    oc exec hello-pod -- curl -sL $EGRESS_SVC:2015 
+    oc exec hello-pod -- curl -sL $EGRESS_SVC:2015
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
-    
+
     echo -e "$BBlue Access youdao $NC"
     oc exec hello-pod -- curl -sIL $EGRESS_SVC | grep youdao.com
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
 }
 
@@ -179,10 +179,10 @@ function create_with_configmap() {
     cat << EOF > egress-dest.txt
     # Redirect connection to udp port 9999 to destination IP udp port 9999
     9999 udp $LOCAL_SERVER
-    
+
     # Redirect connection to tcp port 8888 to detination IP tcp port 2015
     8888 tcp 45.62.99.61 2015
-    
+
     # Fallback IP
     61.135.218.24
 EOF
@@ -200,21 +200,21 @@ function test_configmap(){
     echo -e
     echo -e
     ssh bmeng@fedorabmeng.usersys.redhat.com "sudo docker logs ncat-udp"
-    
+
     echo -e "$BBlue Access hello openshift from 8888 to 2015$NC"
     oc exec hello-pod -- curl -sL $EGRESS_SVC:8888
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
-    
+
     echo -e "$BBlue Access youdao $NC"
     oc exec hello-pod -- curl -sIL $EGRESS_SVC | grep youdao.com
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
 }
 
@@ -242,17 +242,16 @@ function test_egressrouter_with_egressfirewall() {
 EOF
 	oc exec hello-pod -- curl -Iv http://www.youdao.com/ --connect-timeout 5
     if [ $? -ne 7 ]
-        then
-        echo -e "${BRed}Egress network policy does not take effect ${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Egress network policy does not take effect ${NC}"
+      exit 1
     fi
-	oc exec hello-pod -- curl -Iv -H "host: www.youdao.com" $EGRESS_SVC:80
+    oc exec hello-pod -- curl -Iv -H "host: www.youdao.com" $EGRESS_SVC:80
     if [ $? -ne 0 ]
-        then
-        echo -e "${BRed}Failed to access remote server${NC}"
-        exit 1
+    then
+      echo -e "${BRed}Failed to access remote server${NC}"
+      exit 1
     fi
-    
 }
 
 function clean_up(){
@@ -261,14 +260,14 @@ function clean_up(){
 }
 
 if [ -z $USE_PROXY ]
-    then 
-    set_proxy
+then
+  set_proxy
 fi
 
 if [ -z $IMAGE_VERSION ]
-    then
-    echo "$BRed Missing image version! $NC"
-    exit 1
+then
+  echo "$BRed Missing image version! $NC"
+  exit 1
 fi
 
 EGRESS_DEST_EXT=61.135.218.25
