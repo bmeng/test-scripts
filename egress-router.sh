@@ -28,7 +28,7 @@ function prepare_user() {
     fi
     
     # login to server
-    oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=false
+    oc login https://$MASTER_IP:8443 -u bmeng -p redhat --insecure-skip-tls-verify=true
     if [ $? -ne 0 ]
         then
         echo -e "${BRed}Failed to login${NC}"
@@ -93,6 +93,12 @@ function create_legacy_egress_router() {
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/legacy-egress-router-list.json | sed "s#egress-router-image#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$EGRESS_DEST_EXT#g" | oc create -f - -n $PROJECT
 }
 
+function create_init_egress_router() {
+    echo -e "$BBlue Create egress router with initContainer mode $NC"
+    local DEST=$1
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | oc create -f - -n $PROJECT
+}
+
 function test_old_scenarios() {
     #access the router
     echo -e "$BBlue Access youdao  $NC"
@@ -122,12 +128,6 @@ function test_old_scenarios() {
     #connect the node via the egress ip
     echo -e "$BBlue Connect node via egress ip  $NC"
     telnet $EGRESS_IP 22 || true
-}
-
-function create_init_egress_router() {
-    echo -e "$BBlue Create egress router with initContainer mode $NC"
-    local DEST=$1
-    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | oc create -f - -n $PROJECT
 }
 
 function test_init_container(){
@@ -218,6 +218,43 @@ function test_configmap(){
     fi
 }
 
+function test_egressrouter_with_egressfirewall() {
+    echo -e "$BBlue Test egress router with egress firewall. $NC"
+	# create egress network policy
+    cat << EOF | oc create -f - -n $PROJECT --config admin.kubeconfig
+{
+    "kind": "EgressNetworkPolicy",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "deny-youdao"
+    },
+    "spec": {
+        "egress": [
+            {
+                "type": "Deny",
+                "to": {
+                    "cidrSelector": "61.135.218.0/24"
+                }
+            }
+        ]
+    }
+}
+EOF
+	oc exec hello-pod -- curl -Iv http://www.youdao.com/ --connect-timeout 5
+    if [ $? -ne 7 ]
+        then
+        echo -e "${BRed}Egress network policy does not take effect ${NC}"
+        exit 1
+    fi
+	oc exec hello-pod -- curl -Iv -H "host: www.youdao.com" $EGRESS_SVC:80
+    if [ $? -ne 0 ]
+        then
+        echo -e "${BRed}Failed to access remote server${NC}"
+        exit 1
+    fi
+    
+}
+
 function clean_up(){
     echo -e "$BBlue Delete the egress router pod and svc $NC"
     oc delete rc,svc --all -n $PROJECT ; sleep 20
@@ -293,6 +330,18 @@ get_router_info
 test_router_with_nodename
 clean_up
 echo '
+
+
+'
+echo -e "${BGreen} Test egressrouter with egresspolicy ${NC}"
+create_init_egress_router '61.135.218.24'
+wait_for_pod_running egress 1
+get_router_info
+test_egressrouter_with_egressfirewall
+clean_up
+echo '
+
+
 
 
 '
