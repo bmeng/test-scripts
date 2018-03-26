@@ -175,6 +175,23 @@ function test_svc(){
     done
 }
 
+function test_preemption_strategy(){
+    echo -e "$BGreen Test ipfailover with preemption strategy  $NC"
+
+    oc label node $NODE1 router=enabled --config admin.kubeconfig
+    oc label node $NODE2 router=enabled --config admin.kubeconfig
+
+    oc adm ipfailover ipfnopre--create --selector=router=enabled --virtual-ips=${VIP_1} --replicas=1 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION --preemption-strategy=nopreempt
+
+    # wait the keepaliveds are running
+    while [ `oc get pod --config admin.kubeconfig | grep -v deploy | grep ipf | grep Running | wc -l` -lt 1 ]
+    do
+      sleep 5
+    done
+
+    echo -e "$BBlue Check the value in keepalived.conf $NC"
+    oc exec `oc get po --config admin.kubeconfig | grep ipfnopre |grep -v deploy| cut -d " " -f1` --config admin.kubeconfig -- grep -i preempt /etc/keepalived/keepalived.conf
+}
 
 function clean_up(){
     echo -e "$BGreen Clean up the pods $NC"
@@ -182,7 +199,8 @@ function clean_up(){
     oc delete dc,svc router-blue --config admin.kubeconfig
     oc delete dc ipf-red --config admin.kubeconfig
     oc delete dc ipf-blue --config admin.kubeconfig
-    oc delete dc ipf  --config admin.kubeconfig
+    oc delete dc ipf --config admin.kubeconfig
+    oc delete dc ipfnopre --config admin.kubeconfig
     oc delete all --all
     sleep 15
 }
@@ -192,6 +210,8 @@ check_ips
 test_offset
 clean_up
 test_svc
+clean_up
+test_preemption_strategy
 clean_up
 
 oc delete project ipf
