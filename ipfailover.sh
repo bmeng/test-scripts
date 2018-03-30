@@ -181,7 +181,7 @@ function test_preemption_strategy(){
     oc label node $NODE1 router=enabled --config admin.kubeconfig
     oc label node $NODE2 router=enabled --config admin.kubeconfig
 
-    oc adm ipfailover ipfnopre--create --selector=router=enabled --virtual-ips=${VIP_1} --replicas=1 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION --preemption-strategy=nopreempt
+    oc adm ipfailover ipfnopre --create --selector=router=enabled --virtual-ips=${VIP_1} --replicas=1 --service-account=ipfailover --config admin.kubeconfig --images=$LOCAL_REGISTRY/openshift3/ose-keepalived-ipfailover:$VERSION --preemption-strategy=nopreempt
 
     # wait the keepaliveds are running
     while [ `oc get pod --config admin.kubeconfig | grep -v deploy | grep ipf | grep Running | wc -l` -lt 1 ]
