@@ -30,6 +30,16 @@ function create_temp_upgrade_dir(){
 
 function copy_admin_kubeconfig() {
     scp root@$master:/etc/origin/master/admin.kubeconfig $UPGRADE_DIR/admin.kubeconfig
+    local CURR=`grep current-context $UPGRADE_DIR/admin.kubeconfig | cut -d: -f2-`
+    local CONTEXTS=($(grep name\:\ default $UPGRADE_DIR/admin.kubeconfig | cut -d: -f2-))
+
+    if [[ $CURR = ${CONTEXT[0]} ]]
+    then
+        sed -i "s#current-context:.*#current-context: ${CONTEXTS[1]}#g" $UPGRADE_DIR/admin.kubeconfig
+    else
+        sed -i "s#current-context:.*#current-context: ${CONTEXTS[0]}#g" $UPGRADE_DIR/admin.kubeconfig
+    fi
+
     ADMIN="--config $UPGRADE_DIR/admin.kubeconfig"
 }
 
@@ -90,10 +100,6 @@ function create_ingress() {
 }
 
 function create_ipfailover() {
-    oc adm policy add-scc-to-user hostnetwork -z router $ADMIN
-    exit_on_fail
-    oc adm router --images="registry.reg-aws.openshift.com:443/openshift3/ose-haproxy-router:${version}" $ADMIN
-    exit_on_fail
     oc adm policy add-scc-to-user privileged -z ipfailover $ADMIN
     exit_on_fail
     oc adm ipfailover --images="registry.reg-aws.openshift.com:443/openshift3/ose-keepalived-ipfailover:${version}" --virtual-ips=40.40.40.40 $ADMIN
