@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source color.sh
+
 master=$Master
 master_port=$Master_Port
 node=$Node
@@ -10,15 +12,18 @@ function exit_on_fail() {
     if [ $? -ne 0 ]
     then
       exit 1
+      echo -e "$BRed Step failed!! $NC"
     fi
 }
 
 function login() {
+    echo -e "$BBlue Login to the openshift master. $NC"
     oc login https://${master}:${master_port} ${user} --insecure-skip-tls-verify=true
     exit_on_fail
 }
 
 function create_projects() {
+    echo -e "$BBlue Create projects $NC"
     oc new-project bmengp1
     oc new-project bmengp2
 }
@@ -29,6 +34,7 @@ function create_temp_upgrade_dir(){
 }
 
 function copy_admin_kubeconfig() {
+    echo -e "$BBlue Copy the admin.kubeconfig from master and change context. $NC"
     scp root@$master:/etc/origin/master/admin.kubeconfig $UPGRADE_DIR/admin.kubeconfig
     local CURR=`grep current-context $UPGRADE_DIR/admin.kubeconfig | cut -d: -f2-`
     local CONTEXTS=($(grep name\:\ default $UPGRADE_DIR/admin.kubeconfig | cut -d: -f2-))
@@ -54,17 +60,19 @@ function wait_running() {
         break
       fi
       sleep 10
+      echo -e "Waiting for pods ready..."
       let COUNT=$COUNT+1
     done
     if [ $COUNT -eq 20 ]
     then
-      echo -e "Pod creation failed"
+      echo -e "$BRed Pod creation failed! $NC"
       exit 1
     fi
 
 }
 
 function create_podsvc() {
+    echo -e "$BBlue Create pod and svc in user projects. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n bmengp1
     exit_on_fail
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/routing/list_for_caddy.json -n bmengp2
@@ -74,6 +82,7 @@ function create_podsvc() {
 }
 
 function create_route() {
+    echo -e "$BBlue Create different types of route in user projects. $NC"
     oc expose svc test-service --name=http-route -n bmengp1
     exit_on_fail
     oc create route edge route-edge --service=test-service -n bmengp1
@@ -85,21 +94,25 @@ function create_route() {
 }
 
 function create_egressfirewall() {
+    echo -e "$BBlue Create egress firewall in project 1 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egressnetworkpolicy/limit_policy.json -n bmengp1 $ADMIN
     exit_on_fail
 }
 
 function create_networkpolicy() {
+    echo -e "$BBlue Create network policy in project 2 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/networkpolicy/allow-local.yaml -n bmengp2
     exit_on_fail
 }
 
 function create_ingress() {
+    echo -e "$BBlue Create ingress in project 1 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/routing/ingress/test-ingress.json -n bmengp1 $ADMIN
     exit_on_fail
 }
 
 function create_ipfailover() {
+    echo -e "$BBlue Create ipfailover in default project via admin. $NC"
     oc adm policy add-scc-to-user privileged -z ipfailover $ADMIN
     exit_on_fail
     oc adm ipfailover --images="registry.reg-aws.openshift.com:443/openshift3/ose-keepalived-ipfailover:${version}" --virtual-ips=40.40.40.40 $ADMIN
@@ -107,6 +120,7 @@ function create_ipfailover() {
 }
 
 function create_egressIP() {
+    echo -e "$BBlue Add egressIP to hostsubnet and netnamespace via admin. $NC"
     nodename=`oc get hostsubnet -o template --template="{{ (index .items 1).host }}" $ADMIN`
     oc patch hostsubnet $nodename -p '{"egressIPs":["10.10.10.10"]}' $ADMIN
     exit_on_fail
@@ -115,6 +129,7 @@ function create_egressIP() {
 }
 
 function create_egressrouter() {
+    echo -e "$BBlue Create egress router in project1 via admin. $NC"
     oc adm policy add-scc-to-user privileged -z default -n bmengp1 $ADMIN
     exit_on_fail
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/legacy-egress-router-list.json | sed "s/egress_ip/20.20.20.20/g;s/egress_gw/20.20.20.1/g;s/egress_dest/30.30.30.30/g;s/egress-router-image/registry.reg-aws.openshift.com:443\/openshift3\/ose-egress-router:${version}/g" | oc create -f - -n bmengp1 $ADMIN
@@ -122,21 +137,25 @@ function create_egressrouter() {
 }
 
 function create_hostsubnet(){
+    echo -e "$BBlue Create f5 hostsubnet via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/f5-hostsubnet.json $ADMIN
     exit_on_fail
 }
 
 function dump_iptables() {
+    echo -e "$BBlue Dump iptables rules into $UPGRADE_DIR. $NC"
     ssh root@$node iptables-save > $UPGRADE_DIR/iptables.dump
     exit_on_fail
 }
 
 function dump_openflow() {
+    echo -e "$BBlue Dump openflow rules into $UPGRADE_DIR. $NC"
     ssh root@$node ovs-ofctl dump-flows br0 -O openflow13 > $UPGRADE_DIR/openflow.dump
     exit_on_fail
 }
 
 function dump_resources() {
+    echo -e "$BBlue Dump created resource into $UPGRADE_DIR. $NC"
     oc get po,svc,rc,route,ingress -o wide -n bmengp1 $ADMIN > $UPGRADE_DIR/p1_resource.yaml
     oc get po,svc,rc,route,ingress -o wide -n bmengp2 $ADMIN > $UPGRADE_DIR/p2_resource.yaml
     oc get egressnetworkpolicy -o yaml -n bmengp1 $ADMIN >> $UPGRADE_DIR/p1_resource.yaml
