@@ -121,6 +121,11 @@ function create_egressrouter() {
     exit_on_fail
 }
 
+function create_hostsubnet(){
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/f5-hostsubnet.json $ADMIN
+    exit_on_fail
+}
+
 function dump_iptables() {
     ssh root@$node iptables-save > $UPGRADE_DIR/iptables.dump
     exit_on_fail
@@ -153,6 +158,7 @@ create_networkpolicy
 create_egressIP
 create_ipfailover
 create_egressrouter
+create_hostsubnet
 dump_resources
 dump_openflow
 dump_iptables
