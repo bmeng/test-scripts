@@ -1,6 +1,6 @@
 #/bin/bash
-image_version=`curl -s $REPO_URL | grep -oE 'atomic-openshift-3.[0-9].[0-9]{1,3}[,-][0-9]{1,3}.[0-9]{1,3}' | cut -d- -f3- | uniq`
-image_tag=v$image_version
+image_version=`curl -s $REPO_URL | grep -oE 'atomic-openshift-3.[0-9]{2}.[0-9]{1,3}[,-][0-9]{1,3}.[0-9]{1,3}.[0-9]' | cut -d- -f3- | uniq`
+image_tag=v${image_version}.0
 
 old_image_version=`cat /tmp/image_version`
 
