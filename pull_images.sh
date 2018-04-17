@@ -6,7 +6,7 @@ old_image_version=`cat /tmp/image_version`
 
 if [[ $image_version != $old_image_version ]]
 then 
-    ssh bmeng@fedorabmeng.usersys.redhat.com "sync_images $image_tag"
+    ssh bmeng@fedorabmeng.usersys.redhat.com "sync_images $image_tag brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888/openshift3"
     if [ $? -eq 0 ]
         then
         touch /tmp/image_version
