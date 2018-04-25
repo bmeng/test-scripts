@@ -670,6 +670,8 @@ if [ -z $USE_PROXY ]
     set_proxy
 fi
 
+set -x
+
 PROJECT=egressproject
 LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
 external_service=$EXTERNAL_SERVICE
@@ -678,6 +680,8 @@ external_service=$EXTERNAL_SERVICE
 prepare_user
 clean_node_egressIP
 check_ip
+
+oc version
 
 if ( $OCP15465 ); then
 test_only_cluster_admin_can_modify
