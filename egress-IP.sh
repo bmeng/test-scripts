@@ -670,9 +670,8 @@ if [ -z $USE_PROXY ]
     set_proxy
 fi
 
-set -x
 
-PROJECT=egressproject
+PROJECT=newegressproject
 LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
 external_service=$EXTERNAL_SERVICE
 
