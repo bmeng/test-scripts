@@ -125,7 +125,7 @@ function step_fail(){
 
 
 function elect_egress_node(){
-    EGRESS_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
 }
 
 
@@ -285,7 +285,7 @@ function test_iptables_openflow_rules(){
 
     assign_egressIP_to_netns $PROJECT
 
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | tr -d " "`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | awk -F' ' '{print $2}'`
 
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
     step_pass
