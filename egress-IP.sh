@@ -464,6 +464,7 @@ function test_access_egressip(){
     echo -e "$BBlue Test OCP-15996 Should not be able to access node via egressIP. $NC"
 
     assign_egressIP_to_node
+    assign_egressIP_to_netns $PROJECT
     ssh root@$EGRESS_NODE "hostname"
     step_pass
     ssh root@$EGRESS_IP "hostname"
