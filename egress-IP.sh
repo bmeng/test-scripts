@@ -289,9 +289,9 @@ function test_iptables_openflow_rules(){
     step_pass
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
     step_pass
-    ssh root@$EGRESS_NODE "ovs-ofctl dump-flows br0 -O openflow13 | grep table=100"
+    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
-    ssh root@$OTHER_NODE "ovs-ofctl dump-flows br0 -O openflow13 | grep table=100"
+    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
 
     clean_up_egressIPs
@@ -300,9 +300,9 @@ function test_iptables_openflow_rules(){
     step_fail
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
     step_fail
-    ssh root@$EGRESS_NODE "ovs-ofctl dump-flows br0 -O openflow13 | grep table=100"
+    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100' 
     echo -e "\n"
-    ssh root@$OTHER_NODE "ovs-ofctl dump-flows br0 -O openflow13 | grep table=100"
+    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
 
     oc delete all --all -n $PROJECT
