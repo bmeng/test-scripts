@@ -155,10 +155,11 @@ function test_init_container(){
 
 function create_multiple_router_with_nodename() {
     echo -e "$BBlue Create multiple router with single svc on same node $NC"
+    local RANDOM_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
     local DEST=$1
     local EGRESS_IP_2=10.66.141.252
-    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | oc create -f - -n $PROJECT
-    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP_2#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq '.items[0].spec.template.spec.nodeName = "ose-node1.bmeng.local"' | jq '.items[0].spec.replicas = 1' | sed 's/egress-rc/egress-rc-2/g' |  oc create -f - -n $PROJECT
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq ".items[0].spec.template.spec.nodeName = \"$RANDOM_NODE\"" | jq '.items[0].spec.replicas = 1' | oc create -f - -n $PROJECT
+    curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/egress-router-init-container.json | sed "s#openshift3/ose-egress-router#$EGRESS_ROUTER_IMAGE#g;s#egress_ip#$EGRESS_IP_2#g;s#egress_gw#$EGRESS_GATEWAY#g;s#egress_dest#$DEST#g" | jq ".items[0].spec.template.spec.nodeName = \"$RANDOM_NODE\"" | jq '.items[0].spec.replicas = 1' | sed 's/egress-rc/egress-rc-2/g' |  oc create -f - -n $PROJECT
 }
 
 function test_router_with_nodename() {
