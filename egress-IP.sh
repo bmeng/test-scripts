@@ -208,7 +208,7 @@ function test_egressip_to_multi_netns(){
 
 function test_no_node_with_egressip(){
     echo -e "$BBlue Test OCP-15469 Pods will lose external access if there is no node can host the egress IP which admin assigned to the netns. $NC"
-#    assign_egressIP_to_node
+    assign_egressIP_to_node
 
     assign_egressIP_to_netns $PROJECT
 
@@ -234,6 +234,8 @@ function test_no_node_with_egressip(){
 function test_pods_through_egressip(){
     echo -e "$BBlue Test OCP-15471 All the pods egress connection will get out through the egress IP if the egress IP is set to netns and egress node can host the IP $NC"
     echo -e "$BRed Needs update for multiple projects $NC"
+
+    assign_egressIP_to_node
 
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
