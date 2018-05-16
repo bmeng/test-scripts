@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source color.sh
+source ./color.sh
 
-master=$Master
-master_port=$Master_Port
-node=$Node
-user="-u bmeng -p redhat"
-version=`ssh root@$master "oc version | head -1 | cut -d ' ' -f2"`
+master=$MASTER
+master_port=$MASTER_PORT
+node=$NODE
+user="-u bmeng@redhat.com -p redhat"
+version=$VERSION
+#version=`ssh root@$master "oc version | head -1 | cut -d ' ' -f2"`
 
 function exit_on_fail() {
     if [ $? -ne 0 ]
@@ -125,7 +126,6 @@ function create_egressIP() {
     oc patch hostsubnet $nodename -p '{"egressIPs":["10.10.10.10"]}' $ADMIN
     exit_on_fail
     oc patch netnamespace bmengp2 -p '{"egressIPs":["10.10.10.10"]}' $ADMIN
-    exit_on_fail
 }
 
 function create_egressrouter() {
