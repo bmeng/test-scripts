@@ -132,7 +132,8 @@ function create_ipfailover() {
     oc adm policy add-scc-to-user privileged -z ipfailover $ADMIN
     exit_on_fail
     oc adm ipfailover --images="registry.reg-aws.openshift.com:443/openshift3/ose-keepalived-ipfailover:${version}" --virtual-ips=40.40.40.40 $ADMIN
-    exit_on_fail
+    # do not exit if this step fail since the ipfailover creation bug
+    #exit_on_fail
 }
 
 function create_egressIP() {
