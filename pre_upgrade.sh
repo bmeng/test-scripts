@@ -5,9 +5,24 @@ source ./color.sh
 master=$MASTER
 master_port=$MASTER_PORT
 node=$NODE
-user="-u bmeng@redhat.com -p redhat"
 version=$VERSION
-#version=`ssh root@$master "oc version | head -1 | cut -d ' ' -f2"`
+
+
+if [ -n $CREDENTIAL ]
+then
+  if [[ $CRED =~ .*:.* ]]
+  then
+    username=`echo $CREDENTIAL | cut -d: -f1`
+    passwd=`echo $CREDENTIAL | cut -d: -f2`
+    user="-u $username -p $passwd"
+  else
+    user="--token $CREDENTIAL"
+  fi
+else
+  echo -e "$BRed No user spcified! $NC"
+  exit 1
+fi
+
 
 function exit_on_fail() {
     if [ $? -ne 0 ]
