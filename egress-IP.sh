@@ -505,6 +505,7 @@ function test_add_remove_egressip(){
     assign_egressIP_to_netns $PROJECT
 
     # remove the egressIP on netnamespace
+    echo -e "$BBlue Remove the egressIP from the netnamespace $NC"
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
     # sleep some time to wait for the egressIP ready
@@ -519,6 +520,7 @@ function test_add_remove_egressip(){
     done
 
     # add the egressIP back
+    echo -e "$BBlue Add the egressIP back to the netnamespace $NC"
     assign_egressIP_to_netns $PROJECT
 
     # sleep some time to wait for the egressIP ready
@@ -547,6 +549,7 @@ function test_switch_egressip(){
 
     elect_egress_node
 
+    echo -e "$BBlue Add multiple egressIP to different node $NC"
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     OTHER_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//"`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
@@ -599,6 +602,7 @@ function test_reuse_egressip(){
     sleep 15
 
     # delete the project
+    echo -e "$BBlue Delete the project $NC"
     oc delete project $PROJECT
     
     until [ `oc get project | grep $PROJECT | wc -l` -eq 0 ]
@@ -607,6 +611,7 @@ function test_reuse_egressip(){
       sleep 5
     done
 
+    echo -e "$BBlue Remove the egressIP from node $NC"
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
     NEWPROJECT=newegress
@@ -628,6 +633,7 @@ function test_reuse_egressip(){
       step_pass
     done
 
+    echo -e "$BBlue Delete the project for the 2nd time $NC"
     oc delete project $NEWPROJECT
 
     until [ `oc get project | grep $NEWPROJECT | wc -l` -eq 0 ]
@@ -636,6 +642,7 @@ function test_reuse_egressip(){
       sleep 5
     done
 
+    echo -e "$BBlue Remove the egressIP from node 2nd time $NC"
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 
     create_project $PROJECT
