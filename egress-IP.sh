@@ -312,7 +312,6 @@ function test_iptables_openflow_rules(){
 }
 
 function test_multi_egressip(){
-    set -x 
     echo -e "$BBlue Test OCP-15474 Only the first element of the EgressIPs array in netNamespace will take effect. $NC"
 
     oc project $PROJECT
@@ -339,7 +338,6 @@ function test_multi_egressip(){
     oc delete all --all -n $PROJECT
     clean_up_egressIPs
     sleep 10
-    set +x
 }
 
 function test_egressip_to_multi_host(){
