@@ -41,7 +41,9 @@ function login() {
 function create_projects() {
     echo -e "$BBlue Create projects $NC"
     oc new-project bmengp1
+    exit_on_fail
     oc new-project bmengp2
+    exit_on_fail
 }
 
 function create_temp_upgrade_dir(){
@@ -112,50 +114,40 @@ function create_route() {
 function create_egressfirewall() {
     echo -e "$BBlue Create egress firewall in project 1 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egressnetworkpolicy/limit_policy.json -n bmengp1 $ADMIN
-    exit_on_fail
 }
 
 function create_networkpolicy() {
     echo -e "$BBlue Create network policy in project 2 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/networkpolicy/allow-local.yaml -n bmengp2
-    exit_on_fail
 }
 
 function create_ingress() {
     echo -e "$BBlue Create ingress in project 1 via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/routing/ingress/test-ingress.json -n bmengp1 $ADMIN
-    exit_on_fail
 }
 
 function create_ipfailover() {
     echo -e "$BBlue Create ipfailover in default project via admin. $NC"
     oc adm policy add-scc-to-user privileged -z ipfailover $ADMIN
-    exit_on_fail
     oc adm ipfailover --images="registry.reg-aws.openshift.com:443/openshift3/ose-keepalived-ipfailover:${version}" --virtual-ips=40.40.40.40 $ADMIN
-    # do not exit if this step fail since the ipfailover creation bug
-    #exit_on_fail
 }
 
 function create_egressIP() {
     echo -e "$BBlue Add egressIP to hostsubnet and netnamespace via admin. $NC"
     nodename=`oc get hostsubnet -o template --template="{{ (index .items 1).host }}" $ADMIN`
     oc patch hostsubnet $nodename -p '{"egressIPs":["10.10.10.10"]}' $ADMIN
-    exit_on_fail
     oc patch netnamespace bmengp2 -p '{"egressIPs":["10.10.10.10"]}' $ADMIN
 }
 
 function create_egressrouter() {
     echo -e "$BBlue Create egress router in project1 via admin. $NC"
     oc adm policy add-scc-to-user privileged -z default -n bmengp1 $ADMIN
-    exit_on_fail
     curl -s https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/egress-ingress/egress-router/legacy-egress-router-list.json | sed "s/egress_ip/20.20.20.20/g;s/egress_gw/20.20.20.1/g;s/egress_dest/30.30.30.30/g;s/egress-router-image/registry.reg-aws.openshift.com:443\/openshift3\/ose-egress-router:${version}/g" | oc create -f - -n bmengp1 $ADMIN
-    exit_on_fail
 }
 
 function create_hostsubnet(){
     echo -e "$BBlue Create f5 hostsubnet via admin. $NC"
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/f5-hostsubnet.json $ADMIN
-    exit_on_fail
 }
 
 function dump_iptables() {
@@ -167,6 +159,7 @@ function dump_iptables() {
 function dump_openflow() {
     echo -e "$BBlue Dump openflow rules into $UPGRADE_DIR. $NC"
     ssh root@$node "ovs-ofctl dump-flows br0 -O openflow13 2>/dev/null || docker exec openvswitch ovs-ofctl dump-flows br0 -O openflow13" > $UPGRADE_DIR/openflow.dump
+    exit_on_fail
     ssh root@$node "ovs-vsctl --version 2>/dev/null || docker exec openvswitch ovs-vsctl --version" > $UPGRADE_DIR/ovs.version
     exit_on_fail
 }
@@ -180,6 +173,7 @@ function dump_resources() {
     oc get clusternetwork,hostsubnet,netnamespaces $ADMIN > $UPGRADE_DIR/cluster.info
 }
 
+rm -rf /tmp/upgrade*
 
 echo "Start pre upgrade!"
 login
