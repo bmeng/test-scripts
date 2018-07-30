@@ -135,8 +135,9 @@ function assign_egressIP_to_node(){
 
 function assign_egressCIDR_to_node(){
     elect_egress_node
+    local egresscidr=$1
     echo -e "$BBlue Assign egress IP to the elected node $NC"
-    oc patch hostsubnet $EGRESS_NODE -p "{\"egressCIDRs\":[\"$EGRESS_CIDR\"]}" --config admin.kubeconfig
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressCIDRs\":[\"${egresscidr:-$EGRESS_CIDR}\"]}" --config admin.kubeconfig
 }
 
 function assign_egressIP_to_netns(){
@@ -574,7 +575,7 @@ function test_reuse_egressip(){
     sleep 15
 }
 
-function test_single_egressCIDR () {
+function test_single_egressCIDR() {
     echo -e "$BBlue Test OCP-18581 The egressIP could be assigned to project automatically once it is defined in hostsubnet egressCIDR. $NC"
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
@@ -589,6 +590,70 @@ function test_single_egressCIDR () {
       step_pass
       access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
+    done
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP2
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
+    done
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP3
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP3
+      step_pass
+    done
+    EGRESS_IP_OOR=10.1.1.100
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP_OOR
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_fail
+    done
+}
+
+function test_multiple_egressCIDRs() {
+    echo -e "$BBlue Test OCP-20011 The egressIP could be assigned to project automatically when the hostsubnet has multiple egressCIDRs specified. $NC"
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    assign_egressCIDR_to_node "10.66.140.96/28\",\"10.66.140.200/29\",\"10.66.141.250\32"
+    assign_egressIP_to_netns $PROJECT
+    sleep 15
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP2
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
+    done
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP3
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP3
+      step_pass
+    done
+    EGRESS_IP_OOR=10.66.140.180
+    assign_egressIP_to_netns $PROJECT $EGRESS_IP_OOR
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_fail
     done
 }
 
@@ -672,7 +737,11 @@ if ( $OCP18316 ); then
 test_reuse_egressip
 fi
 echo -e "\n\n\n\n"
-
+if ( $egressCIDR ); then
+  test_single_egressCIDR
+  test_multiple_egressCIDRs
+fi
+echo -e "\n\n\n\n"
 
 # clean all in the end
 oc delete project $PROJECT || true
