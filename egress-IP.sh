@@ -58,6 +58,13 @@ function prepare_user() {
       echo -e "Waiting for project to be deleted on server"
       sleep 5
     done
+    oc delete project newegress
+    echo -e "$BBlue Delete the newegress if already existed. $NC"
+    until [ `oc get project | grep "newegress" | wc -l` -eq 0 ]
+    do
+      echo -e "Waiting for newegress to be deleted on server"
+      sleep 5
+    done
     oc delete project project2
     echo -e "$BBlue Delete the project2 if already existed. $NC"
     until [ `oc get project | grep project2 | wc -l` -eq 0 ]
@@ -713,7 +720,7 @@ if [ -z $USE_PROXY ]
     set_proxy
 fi
 
-PROJECT=newegressproject
+PROJECT=egressproject
 LOCAL_SERVER=`ping fedorabmeng.usersys.redhat.com -c1  | grep ttl | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
 external_service=$EXTERNAL_SERVICE
 
@@ -754,8 +761,8 @@ if ( $regressionbugs ); then
 fi
 echo -e "\n\n\n\n"
 if ( $egressCIDR ); then
-#  test_single_egressCIDR
-#  test_multiple_egressCIDRs
+  test_single_egressCIDR
+  test_multiple_egressCIDRs
   test_egressIP_to_different_project
 fi
 echo -e "\n\n\n\n"
@@ -764,4 +771,5 @@ echo -e "\n\n\n\n"
 # clean all in the end
 oc delete project $PROJECT || true
 oc delete project project2 || true
+oc delete project newegress || true
 oc delete egressnetworkpolicy default -n default --config admin.kubeconfig || true
