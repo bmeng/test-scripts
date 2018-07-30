@@ -1,4 +1,6 @@
 #!/bin/bash
+source color.sh
+
 function prepare_user() {
     #copy admin kubeconfig
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
@@ -95,29 +97,29 @@ function test_first_available_item() {
     wait_for_pod_running test-rc 2
     elect_egress_node
     # Add multiple egressIP to project and the 2nd one will be claimed by node
-    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$NS_EGRESS_IP\",\"$NS_EGRESS_IP2\"]}" --config admin.kubeconfig
+    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     # Add multiple egressIP to node 
-    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$HOST_EGRESS_IP\",\"$HOST_EGRESS_IP2\"]}" --config admin.kubeconfig
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     # sleep sometime to make sure the egressIP ready
     sleep 15
     # Try to access outside with the source IP on the 2nd place
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP2
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
       step_pass
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP2
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
       step_pass
     done
     # Try to addnew egressIPs to new node, which claimed the 1st item in project egressIP array
     SECOND_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
-    oc patch hostsubnet ${SECOND_NODE} -p "{\"egressIPs\":[\"$HOST_EGRESS_IP3\",\"$HOST_EGRESS_IP4\"]}" --config admin.kubeconfig
+    oc patch hostsubnet ${SECOND_NODE} -p "{\"egressIPs\":[\"$EGRESS_IP4\",\"$EGRESS_IP\"]}" --config admin.kubeconfig
     # Try to access outside and the 1st egressIP will take effect
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP
+      access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP
+      access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
     oc delete all --all -n $PROJECT
@@ -132,25 +134,25 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     # Add multiple egressIP to project
-    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$NS_EGRESS_IP\",\"$NS_EGRESS_IP2\",\"$NS_EGRESS_IP3\"]}" --config admin.kubeconfig
+    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\",\"$EGRESS_IP3\"]}" --config admin.kubeconfig
     # Add the egress IP to host which claiming the 1st ip
     elect_egress_node
-    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$HOST_EGRESS_IP\"]}" --config admin.kubeconfig
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
     sleep 15
     # Try to access outside
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP
+      access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
-      access_external_network $p $PROJECT | grep $NS_EGRESS_IP
+      access_external_network $p $PROJECT | grep $EGRESS_IP
       step_pass
     done
     # Add egress to another project which is the same as the one in project1's secondary egressIP
     oc project $NEWPROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
     wait_for_pod_running test-rc 2
-    oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$NS_EGRESS_IP2\"]}" --config admin.kubeconfig
+    oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     # Try to access outside with both project
     for p in ${pod}
     do
@@ -167,7 +169,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
       step_fail
     done
     # Update the 2nd project to use the 3rd egressIP of project 1
-    oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$NS_EGRESS_IP3\"]}" --config admin.kubeconfig
+    oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
     # Try to access outside with both project
     for p in ${pod}
     do
