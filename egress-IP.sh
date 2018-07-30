@@ -686,64 +686,34 @@ check_ip
 
 oc version
 
-if ( $OCP15465 ); then
-test_only_cluster_admin_can_modify
+if ( $basicfunction ); then
+  test_pods_through_egressip
+  test_multi_egressip
+  test_egressip_to_multi_host
+  test_pods_in_other_project
 fi
 echo -e "\n\n\n\n"
-if ( $OCP15467 ); then
-test_egressip_to_multi_netns
+if ( $negativetests ); then
+  test_only_cluster_admin_can_modify
+  test_egressip_to_multi_netns
+  test_no_node_with_egressip
+  test_negative_values
 fi
 echo -e "\n\n\n\n"
-if ( $OCP15469 ); then
-test_no_node_with_egressip
+if ( $nodechecks ); then
+  test_node_nic
+  test_iptables_openflow_rules
+  test_access_egressip
 fi
 echo -e "\n\n\n\n"
-if ( $OCP15471 ); then
-test_pods_through_egressip
+if ( $egressfirewall ); then
+  test_egressnetworkpolicy_with_egressip
 fi
 echo -e "\n\n\n\n"
-if ( $OCP15472 ); then
-test_node_nic
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15473 ); then
-test_iptables_openflow_rules
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15474 ); then
-test_multi_egressip
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15987 ); then
-test_egressip_to_multi_host
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15989 ); then
-test_pods_in_other_project
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15996 ); then
-test_access_egressip
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15998 ); then
-test_negative_values
-fi
-echo -e "\n\n\n\n"
-if ( $OCP15992 ); then
-test_egressnetworkpolicy_with_egressip
-fi
-echo -e "\n\n\n\n"
-if ( $OCP18315 ); then
-test_add_remove_egressip
-fi
-echo -e "\n\n\n\n"
-if ( $OCP18434 ); then
-test_switch_egressip
-fi
-echo -e "\n\n\n\n"
-if ( $OCP18316 ); then
-test_reuse_egressip
+if ( $regressionbugs ); then
+  test_add_remove_egressip
+  test_switch_egressip
+  test_reuse_egressip
 fi
 echo -e "\n\n\n\n"
 if ( $egressCIDR ); then
@@ -751,6 +721,7 @@ if ( $egressCIDR ); then
   test_multiple_egressCIDRs
 fi
 echo -e "\n\n\n\n"
+
 
 # clean all in the end
 oc delete project $PROJECT || true
