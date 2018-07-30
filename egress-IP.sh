@@ -18,12 +18,12 @@ function check_ip() {
         echo -e "$BRed EGRESS IP is being used $NC"
         exit 1
       fi
-      oc get hostsubnet --config admin.kubeconfig | grep $ip
-      if [ $? -ne 1 ]
-      then
-        echo -e "$BRed EGRESS IP is being used! $NC"
-        exit 1
-      fi
+#      oc get hostsubnet --config admin.kubeconfig | grep $ip
+#      if [ $? -ne 1 ]
+#      then
+#        echo -e "$BRed EGRESS IP is being used! $NC"
+#        exit 1
+#      fi
     done
 }
 
