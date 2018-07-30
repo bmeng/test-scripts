@@ -1,6 +1,20 @@
 #!/bin/bash
 source color.sh
 
+function check_ip() {                                                                                  
+  #check ip
+  for ip in $EGRESS_IP $EGRESS_IP2 $EGRESS_IP3 $EGRESS_IP4
+  do
+    echo -e "$BBlue Check if the IP is in-use. $NC"
+    ping -c1 $ip
+    if [ $? -ne 1 ]
+    then
+      echo -e "$BRed EGRESS IP is being used $NC"
+      exit 1
+    fi
+  done
+}
+
 function prepare_user() {
     #copy admin kubeconfig
     scp root@$MASTER_IP:/etc/origin/master/admin.kubeconfig ./
@@ -202,5 +216,7 @@ function test_keep_using_same_egressip() {
 PROJECT=haegress
 NEWPROJECT=newhaegress
 
+check_ip
+prepare_user
 test_first_available_item
 test_egressip_not_in_first_place_being_used_by_other_project
