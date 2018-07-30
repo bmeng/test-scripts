@@ -671,12 +671,14 @@ function test_egressIP_to_different_project() {
     echo -e "$BBlue Test OCP-18586 The same egressIP will not be assigned to different netnamespace. $NC"
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
-    wait_for_pod_running test-rc 2
+    oc scale rc test-rc --replicas=1 -n $PROJECT
+    wait_for_pod_running test-rc 1
     NEWPROJECT=newegress
     create_project $NEWPROJECT
     oc project $NEWPROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
-    wait_for_pod_running test-rc 2 $NEWPROJECT
+    oc scale rc test-rc --replicas=1 -n $NEWPROJECT
+    wait_for_pod_running test-rc 1 $NEWPROJECT
     OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     assign_egressCIDR_to_node
     oc patch hostsubnet $OTHER_NODE -p "{\"egressCIDRs\":[\"$EGRESS_CIDR\"]}" --config admin.kubeconfig
