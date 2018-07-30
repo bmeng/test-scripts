@@ -1,5 +1,5 @@
 #!/bin/bash
-source color.sh
+source ./color.sh
 
 function check_ip() {                                                                                  
   #check ip
@@ -205,13 +205,13 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     sleep 10
 }
 
-function test_egressip_change_node() {
+#function test_egressip_change_node() {
 
-}
+#}
 
-function test_keep_using_same_egressip() {
+#function test_keep_using_same_egressip() {
 
-}
+#}
 
 PROJECT=haegress
 NEWPROJECT=newhaegress
