@@ -617,6 +617,9 @@ function test_single_egressCIDR() {
       access_external_network $p $PROJECT
       step_fail
     done
+    clean_up_egressIPs
+    oc delete all --all -n $PROJECT
+    sleep 15
 }
 
 function test_multiple_egressCIDRs() {
@@ -624,7 +627,7 @@ function test_multiple_egressCIDRs() {
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
-    assign_egressCIDR_to_node "10.66.140.96/28\",\"10.66.140.200/29\",\"10.66.141.250\32"
+    assign_egressCIDR_to_node "10.66.140.96/28\",\"10.66.140.200/29\",\"10.66.141.250/32"
     assign_egressIP_to_netns $PROJECT
     sleep 15
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
@@ -658,6 +661,9 @@ function test_multiple_egressCIDRs() {
       access_external_network $p $PROJECT
       step_fail
     done
+    clean_up_egressIPs
+    oc delete all --all -n $PROJECT
+    sleep 15
 }
 
 function clean_up_resource(){
