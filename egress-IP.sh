@@ -575,6 +575,7 @@ function test_reuse_egressip(){
     done
     clean_up_egressIPs
     oc delete all --all -n $PROJECT
+    oc delete project $NEWPROJECT
     sleep 15
 }
 
@@ -671,7 +672,7 @@ function test_egressIP_to_different_project() {
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
-    NEWPROJECT=newegressproject
+    NEWPROJECT=newegress
     create_project $NEWPROJECT
     oc project $NEWPROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
