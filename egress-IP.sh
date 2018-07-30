@@ -679,8 +679,8 @@ function test_egressIP_to_different_project() {
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
     oc scale rc test-rc --replicas=1 -n $NEWPROJECT
     wait_for_pod_running test-rc 1 $NEWPROJECT
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     assign_egressCIDR_to_node
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressCIDRs\":[\"$EGRESS_CIDR\"]}" --config admin.kubeconfig
     assign_egressIP_to_netns $PROJECT
     assign_egressIP_to_netns $NEWPROJECT
@@ -754,8 +754,8 @@ if ( $regressionbugs ); then
 fi
 echo -e "\n\n\n\n"
 if ( $egressCIDR ); then
-  test_single_egressCIDR
-  test_multiple_egressCIDRs
+#  test_single_egressCIDR
+#  test_multiple_egressCIDRs
   test_egressIP_to_different_project
 fi
 echo -e "\n\n\n\n"
