@@ -260,7 +260,7 @@ function test_iptables_openflow_rules(){
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_netns $PROJECT
-    OTHER_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f2 | tr -d " "`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
     step_pass
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
@@ -310,7 +310,7 @@ function test_egressip_to_multi_host(){
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
-    OTHER_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f2 | tr -d " "`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
     # sleep sometime to make sure the egressIP ready
     sleep 10
@@ -482,7 +482,7 @@ function test_switch_egressip(){
     elect_egress_node
     echo -e "$BBlue Add multiple egressIP to different node $NC"
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
-    OTHER_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f2 | tr -d " "`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
     assign_egressIP_to_netns $PROJECT
     sleep 15
@@ -666,6 +666,40 @@ function test_multiple_egressCIDRs() {
     sleep 15
 }
 
+function test_egressIP_to_different_project() {
+    echo -e "$BBlue Test OCP-18586 The same egressIP will not be assigned to different netnamespace. $NC"
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    NEWPROJECT=newegressproject
+    create_project $NEWPROJECT
+    oc project $NEWPROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
+    wait_for_pod_running test-rc 2 $NEWPROJECT
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
+    assign_egressCIDR_to_node
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressCIDRs\":[\"$EGRESS_CIDR\"]}" --config admin.kubeconfig
+    assign_egressIP_to_netns $PROJECT
+    assign_egressIP_to_netns $NEWPROJECT
+    oc project $PROJECT
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT
+      step_fail
+    done
+    oc project $NEWPROJECT
+    pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $NEWPROJECT
+      step_fail
+    done
+    clean_up_egressIPs
+    oc delete project $NEWPROJECT
+    oc delete all --all -n $PROJECT
+}
+
 function clean_up_resource(){
     echo -e "$BBlue Delete all resources in project $NC"
     oc delete all --all -n $PROJECT ; sleep 20
@@ -719,6 +753,7 @@ echo -e "\n\n\n\n"
 if ( $egressCIDR ); then
   test_single_egressCIDR
   test_multiple_egressCIDRs
+  test_egressIP_to_different_project
 fi
 echo -e "\n\n\n\n"
 
