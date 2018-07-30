@@ -32,6 +32,7 @@ function clean_node_egressIP() {
     for n in ${nodes[@]}
     do
       oc patch hostsubnet $n -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+      oc patch hostsubnet $n -p "{\"egressCIDRs\":[]}" --config admin.kubeconfig
     done
 }
 
@@ -137,7 +138,9 @@ function assign_egressCIDR_to_node(){
     elect_egress_node
     local egresscidr=$1
     echo -e "$BBlue Assign egress IP to the elected node $NC"
+    set -x
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressCIDRs\":[\"${egresscidr:-$EGRESS_CIDR}\"]}" --config admin.kubeconfig
+    set +x
 }
 
 function assign_egressIP_to_netns(){
