@@ -49,6 +49,16 @@ function prepare_user() {
     create_project $PROJECT
 }
 
+function create_project(){
+    local project=$1
+    oc new-project $project
+    if [ $? -ne 0 ]
+    then
+      echo -e "${BRed}Failed to create $project $NC"
+      exit 1
+    fi
+}
+
 function wait_for_pod_running() {
     local POD=$1
     local NUM=$2
