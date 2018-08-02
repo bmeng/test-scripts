@@ -105,7 +105,7 @@ function step_fail(){
 }
 
 function elect_egress_node(){
-    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
 }
 
 function clean_up_egressIPs(){
@@ -215,9 +215,58 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     sleep 10
 }
 
-#function test_egressip_change_node() {
-
-#}
+function test_egressip_change_node() {
+    echo -e "$BBlue Test OCP-19969 It will change to active node automatically if the netnamespace has multiple egressIPs which are holding by different nodes and the current working node is down. $NC"
+    oc project $PROJECT
+    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    wait_for_pod_running test-rc 2
+    # Add multiple egressIP to project
+    oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
+    # Add the egress IP to host which claiming the 1st ip and 3rd
+    elect_egress_node
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
+    sleep 15
+    # Add the egress IP to the other host which claiming the 2nd ip
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP2\"]}" --config admin.kubeconfig
+    sleep 15
+    # Try to access outside
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+    # make the 1st node down
+    ssh root@$EGRESS_NODE "systemctl stop docker"
+    sleep 15
+    # Try to access outside again
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP2
+      step_pass
+    done
+    # bring the 1st node back
+    ssh root@$EGRESS_NODE "systemctl restart docker"
+    sleep 30
+    # Try to access outside again
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
+    for p in ${pod}
+    do
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+      access_external_network $p $PROJECT | grep $EGRESS_IP
+      step_pass
+    done
+    oc delete all --all -n $PROJECT
+    clean_up_egressIPs
+    sleep 10
+}
 
 #function test_keep_using_same_egressip() {
 
@@ -228,5 +277,6 @@ NEWPROJECT=newhaegress
 
 check_ip
 prepare_user
-test_first_available_item
-test_egressip_not_in_first_place_being_used_by_other_project
+#test_first_available_item
+#test_egressip_not_in_first_place_being_used_by_other_project
+test_egressip_change_node
