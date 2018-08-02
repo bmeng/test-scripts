@@ -105,7 +105,7 @@ function step_fail(){
 }
 
 function elect_egress_node(){
-    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
 }
 
 function clean_up_egressIPs(){
