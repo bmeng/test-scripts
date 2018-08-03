@@ -106,6 +106,7 @@ function step_fail(){
 
 function elect_egress_node(){
     EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
 }
 
 function clean_up_egressIPs(){
@@ -230,7 +231,6 @@ function test_egressip_change_node() {
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
     sleep 15
     # Add the egress IP to the other host which claiming the 2nd ip
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     sleep 15
     # Try to access outside
