@@ -110,7 +110,10 @@ function elect_egress_node(){
 
 function clean_up_egressIPs(){
     echo -e "$BBlue Clean up the egressIP on both hostnetwork and netns $NC"
+    oc patch hostsubnet $EGRESS_NODE -p "{\"egressCIDRs\":[]}" --config admin.kubeconfig
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressCIDRs\":[]}" --config admin.kubeconfig
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
     oc patch netnamespaces $PROJECT -p "{\"egressIPs\":[]}" --config admin.kubeconfig
 }
 
