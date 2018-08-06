@@ -126,7 +126,8 @@ function step_fail(){
 }
 
 function elect_egress_node(){
-    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/compute=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
+    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
 }
 
 function clean_up_egressIPs(){
@@ -186,8 +187,8 @@ function test_egressip_to_multi_netns(){
     assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
     assign_egressIP_to_netns project2
-    echo -e "$BBlue Check the node log $NC"
-    ssh root@$EGRESS_NODE journalctl -l -u atomic-openshift-node --since \"1 min ago\" | grep -E E[0-9]{4}
+    echo -e "$BBlue Check the node network log $NC"
+    ssh root@$EGRESS_NODE "docker ps | grep sdn_sdn | cut -f1 -d ' '| xargs docker logs --tail 200 2>&1 | grep egressip.go"
     # sleep sometime to make sure the egressIP ready
     sleep 10
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
@@ -267,7 +268,6 @@ function test_iptables_openflow_rules(){
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_netns $PROJECT
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
     step_pass
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
@@ -317,7 +317,6 @@ function test_egressip_to_multi_host(){
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
     # sleep sometime to make sure the egressIP ready
     sleep 10
@@ -489,7 +488,6 @@ function test_switch_egressip(){
     elect_egress_node
     echo -e "$BBlue Add multiple egressIP to different node $NC"
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
     assign_egressIP_to_netns $PROJECT
     sleep 15
@@ -687,7 +685,6 @@ function test_egressIP_to_different_project() {
     oc scale rc test-rc --replicas=1 -n $NEWPROJECT
     wait_for_pod_running test-rc 1 $NEWPROJECT
     assign_egressCIDR_to_node
-    OTHER_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
     oc patch hostsubnet $OTHER_NODE -p "{\"egressCIDRs\":[\"$EGRESS_CIDR\"]}" --config admin.kubeconfig
     assign_egressIP_to_netns $PROJECT
     assign_egressIP_to_netns $NEWPROJECT
@@ -732,21 +729,29 @@ oc version
 
 if ( $basicfunction ); then
   test_pods_through_egressip
+  echo -e "\n"
   test_multi_egressip
+  echo -e "\n"
   test_egressip_to_multi_host
+  echo -e "\n"
   test_pods_in_other_project
 fi
 echo -e "\n\n\n\n"
 if ( $negativetests ); then
   test_only_cluster_admin_can_modify
+  echo -e "\n"
   test_egressip_to_multi_netns
+  echo -e "\n"
   test_no_node_with_egressip
+  echo -e "\n"
   test_negative_values
 fi
 echo -e "\n\n\n\n"
 if ( $nodechecks ); then
   test_node_nic
+  echo -e "\n"
   test_iptables_openflow_rules
+  echo -e "\n"
   test_access_egressip
 fi
 echo -e "\n\n\n\n"
@@ -756,13 +761,17 @@ fi
 echo -e "\n\n\n\n"
 if ( $regressionbugs ); then
   test_add_remove_egressip
+  echo -e "\n"
   test_switch_egressip
+  echo -e "\n"
   test_reuse_egressip
 fi
 echo -e "\n\n\n\n"
 if ( $egressCIDR ); then
   test_single_egressCIDR
+  echo -e "\n"
   test_multiple_egressCIDRs
+  echo -e "\n"
   test_egressIP_to_different_project
 fi
 echo -e "\n\n\n\n"
