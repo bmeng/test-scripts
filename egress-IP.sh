@@ -31,8 +31,8 @@ function clean_node_egressIP() {
     nodes=(`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}'`)
     for n in ${nodes[@]}
     do
-      oc patch hostsubnet $n -p "{\"egressIPs\":[]}" --config admin.kubeconfig
       oc patch hostsubnet $n -p "{\"egressCIDRs\":[]}" --config admin.kubeconfig
+      oc patch hostsubnet $n -p "{\"egressIPs\":[]}" --config admin.kubeconfig
     done
 }
 

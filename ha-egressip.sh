@@ -280,6 +280,6 @@ NEWPROJECT=newhaegress
 
 check_ip
 prepare_user
-#test_first_available_item
-#test_egressip_not_in_first_place_being_used_by_other_project
+test_first_available_item
+test_egressip_not_in_first_place_being_used_by_other_project
 test_egressip_change_node
