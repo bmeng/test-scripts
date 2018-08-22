@@ -50,6 +50,15 @@ function prepare_user() {
     create_project $NEWPROJECT
 }
 
+function clean_node_egressIP() {
+    nodes=(`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}'`)
+    for n in ${nodes[@]}
+    do
+      oc patch hostsubnet $n -p "{\"egressCIDRs\":[]}" --config admin.kubeconfig
+      oc patch hostsubnet $n -p "{\"egressIPs\":[]}" --config admin.kubeconfig
+    done
+}
+
 function create_project(){
     local project=$1
     oc new-project $project
@@ -278,6 +287,7 @@ function test_egressip_change_node() {
 PROJECT=haegress
 NEWPROJECT=newhaegress
 
+clean_node_egressIP
 check_ip
 prepare_user
 test_first_available_item
