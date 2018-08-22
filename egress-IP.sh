@@ -268,6 +268,7 @@ function test_iptables_openflow_rules(){
     oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_netns $PROJECT
+    sleep 5
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
     step_pass
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
