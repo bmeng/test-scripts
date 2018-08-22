@@ -331,6 +331,7 @@ function test_egressip_to_multi_host(){
       step_fail
     done
     clean_up_egressIPs
+    oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
     sleep 10
 }
 
