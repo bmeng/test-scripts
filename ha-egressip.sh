@@ -121,7 +121,7 @@ function clean_up_egressIPs(){
 function test_first_available_item() {
     echo -e "$BBlue Test OCP-19961 The first egressIP in the netnamespace list which is claimed by node will take effect. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     elect_egress_node
     # Add multiple egressIP to project and the 2nd one will be claimed by node
@@ -159,7 +159,7 @@ function test_first_available_item() {
 function test_egressip_not_in_first_place_being_used_by_other_project() {
     echo -e "$BBlue Test OCP-19964 The traffic on the project will be dropped if any of the egressIPs is being used in another project. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     # Add multiple egressIP to project
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\",\"$EGRESS_IP3\"]}" --config admin.kubeconfig
@@ -178,7 +178,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     done
     # Add egress to another project which is the same as the one in project1's secondary egressIP
     oc project $NEWPROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $NEWPROJECT
     wait_for_pod_running test-rc 2
     oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     # Try to access outside with both project
@@ -222,7 +222,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
 function test_egressip_change_node() {
     echo -e "$BBlue Test OCP-19969 It will change to active node automatically if the netnamespace has multiple egressIPs which are holding by different nodes and the current working node is down. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     # Add multiple egressIP to project
     oc patch netnamespace $PROJECT -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
