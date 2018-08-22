@@ -181,7 +181,7 @@ function test_egressip_to_multi_netns(){
     echo -e "$BBlue Test OCP-15467 Pods will lose external access if the same egressIP is set to multiple netnamespaces and error logs in master. $NC"
     elect_egress_node
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     create_project project2
     assign_egressIP_to_node
@@ -211,7 +211,7 @@ function test_no_node_with_egressip(){
 #    assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
@@ -231,7 +231,7 @@ function test_pods_through_egressip(){
     echo -e "$BRed Needs update for multiple projects $NC"
     assign_egressIP_to_node
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_netns $PROJECT
     oc scale rc test-rc --replicas=4 -n $PROJECT
@@ -265,7 +265,7 @@ function test_iptables_openflow_rules(){
     echo -e "$BBlue Test OCP-15473 iptables/openflow rules add/remove $NC"
     assign_egressIP_to_node
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_netns $PROJECT
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
@@ -293,7 +293,7 @@ function test_multi_egressip(){
     echo -e "$BBlue Test OCP-15474 Only the first element of the EgressIPs array in netNamespace will take effect. $NC"
     echo -e "$BRed Need update due to the HA egressIP feature. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     elect_egress_node
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\",\"$EGRESS_IP2\"]}" --config admin.kubeconfig
@@ -316,7 +316,7 @@ function test_multi_egressip(){
 function test_egressip_to_multi_host(){
     echo -e "$BBlue Test OCP-15987 The egressIP will be unavailable if it was set to multiple hostsubnets. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     oc patch hostsubnet $OTHER_NODE -p "{\"egressIPs\":[\"$EGRESS_IP\"]}" --config admin.kubeconfig
     # sleep sometime to make sure the egressIP ready
@@ -336,13 +336,13 @@ function test_egressip_to_multi_host(){
 function test_pods_in_other_project(){
     echo -e "$BBlue Test OCP-15989 Pods will not be affected by the egressIP set on other netnamespace. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
     create_project project2
     oc project project2
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n project2
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n project2
     wait_for_pod_running test-rc 2 project2
     pod=$(oc get po -n project2 | grep Running | cut -d' ' -f1)
     for p in ${pod}
@@ -361,7 +361,7 @@ function test_pods_in_other_project(){
 function test_egressnetworkpolicy_with_egressip(){
     echo -e "$BBlue Test OCP-15992 EgressNetworkPolicy works well with egressIP. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
@@ -452,7 +452,7 @@ function test_negative_values(){
 function test_add_remove_egressip(){
     echo -e "$BBlue Test OCP-18315 [bz1547899] Add the removed egressIP back to the netnamespace would work well. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     assign_egressIP_to_node
@@ -489,7 +489,7 @@ function test_add_remove_egressip(){
 function test_switch_egressip(){
     echo -e "$BBlue Test OCP-18434 [bz1553297] Should be able to change the egressIP of the project when there are multiple egressIPs set to nodes. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     elect_egress_node
@@ -531,7 +531,7 @@ function test_switch_egressip(){
 function test_reuse_egressip(){
     echo -e "$BBlue Test OCP-18316 [bz1543786] The egressIPs should work well when re-using the egressIP which is holding by a deleted project. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     assign_egressIP_to_node
     assign_egressIP_to_netns $PROJECT
     sleep 15
@@ -549,7 +549,7 @@ function test_reuse_egressip(){
     NEWPROJECT=newegress
     create_project $NEWPROJECT
     oc project $NEWPROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $NEWPROJECT
     wait_for_pod_running test-rc 2 $NEWPROJECT
     pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
     assign_egressIP_to_node
@@ -572,7 +572,7 @@ function test_reuse_egressip(){
     oc patch hostsubnet $EGRESS_NODE -p "{\"egressIPs\":[]}" --config admin.kubeconfig
     create_project $PROJECT
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     assign_egressIP_to_node
@@ -594,7 +594,7 @@ function test_reuse_egressip(){
 function test_single_egressCIDR() {
     echo -e "$BBlue Test OCP-18581 The egressIP could be assigned to project automatically once it is defined in hostsubnet egressCIDR. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressCIDR_to_node
     assign_egressIP_to_netns $PROJECT
@@ -638,7 +638,7 @@ function test_single_egressCIDR() {
 function test_multiple_egressCIDRs() {
     echo -e "$BBlue Test OCP-20011 The egressIP could be assigned to project automatically when the hostsubnet has multiple egressCIDRs specified. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
     assign_egressCIDR_to_node "10.66.140.96/28\",\"10.66.140.200/29\",\"10.66.141.250/32"
     assign_egressIP_to_netns $PROJECT
@@ -682,13 +682,13 @@ function test_multiple_egressCIDRs() {
 function test_egressIP_to_different_project() {
     echo -e "$BBlue Test OCP-18586 The same egressIP will not be assigned to different netnamespace. $NC"
     oc project $PROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $PROJECT
     oc scale rc test-rc --replicas=1 -n $PROJECT
     wait_for_pod_running test-rc 1
     NEWPROJECT=newegress
     create_project $NEWPROJECT
     oc project $NEWPROJECT
-    oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $NEWPROJECT
+    oc create -f http://fedorabmeng.usersys.redhat.com/testing/list_for_pods.json -n $NEWPROJECT
     oc scale rc test-rc --replicas=1 -n $NEWPROJECT
     wait_for_pod_running test-rc 1 $NEWPROJECT
     assign_egressCIDR_to_node
