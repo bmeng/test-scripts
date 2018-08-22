@@ -383,6 +383,12 @@ function test_egressnetworkpolicy_with_egressip(){
             {
                 "type": "Deny",
                 "to": {
+                    "cidrSelector": "172.16.120.0/24"
+                }
+            },
+            {
+                "type": "Deny",
+                "to": {
                     "cidrSelector": "10.72.12.0/22"
                 }
             }
