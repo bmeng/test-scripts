@@ -262,7 +262,6 @@ function test_node_nic(){
 }
 
 function test_iptables_openflow_rules(){
-set -x 
     echo -e "$BBlue Test OCP-15473 iptables/openflow rules add/remove $NC"
     assign_egressIP_to_node
     oc project $PROJECT
@@ -289,7 +288,6 @@ set -x
     echo -e "\n"
     oc delete all --all -n $PROJECT
     sleep 10
-set +x
 }
 
 function test_multi_egressip(){
