@@ -291,6 +291,7 @@ function test_iptables_openflow_rules(){
 
 function test_multi_egressip(){
     echo -e "$BBlue Test OCP-15474 Only the first element of the EgressIPs array in netNamespace will take effect. $NC"
+    echo -e "$BRed Need update due to the HA egressIP feature. $NC"
     oc project $PROJECT
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/networking/list_for_pods.json -n $PROJECT
     wait_for_pod_running test-rc 2
