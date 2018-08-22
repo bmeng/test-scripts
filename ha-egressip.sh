@@ -47,6 +47,7 @@ function prepare_user() {
     sleep 10
     # create project
     create_project $PROJECT
+    create_project $NEWPROJECT
 }
 
 function create_project(){
@@ -140,8 +141,7 @@ function test_first_available_item() {
       step_pass
     done
     # Try to addnew egressIPs to new node, which claimed the 1st item in project egressIP array
-    SECOND_NODE=`oc get node --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
-    oc patch hostsubnet ${SECOND_NODE} -p "{\"egressIPs\":[\"$EGRESS_IP4\",\"$EGRESS_IP\"]}" --config admin.kubeconfig
+    oc patch hostsubnet ${OTHER_NODE} -p "{\"egressIPs\":[\"$EGRESS_IP4\",\"$EGRESS_IP\"]}" --config admin.kubeconfig
     # Try to access outside and the 1st egressIP will take effect
     for p in ${pod}
     do
