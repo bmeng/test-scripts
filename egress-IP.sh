@@ -12,7 +12,7 @@ function check_ip() {
     for ip in $EGRESS_IP $EGRESS_IP2 $EGRESS_IP3
     do
       echo -e "$BBlue Check if the IP is in-use. $NC"
-      ping -c1 $ip
+      ssh $MASTER_IP "ping -c1 $ip"
       if [ $? -ne 1 ]
       then
         echo -e "$BRed EGRESS IP is being used $NC"
