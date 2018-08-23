@@ -253,7 +253,7 @@ function test_egressip_change_node() {
     done
     # make the 1st node down
     ssh root@$EGRESS_NODE "systemctl stop docker"
-    sleep 15
+    sleep 45
     # Try to access outside again
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
@@ -285,10 +285,8 @@ function test_egressip_change_node() {
 #}
 
 PROJECT=haegress
-NEWPROJECT=newhaegress
+NEWPROJECT=newegress
 
-
-set -x
 prepare_user
 clean_node_egressIP
 check_ip
