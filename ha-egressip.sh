@@ -117,8 +117,8 @@ function step_fail(){
 function elect_egress_node(){
     EGRESS_NODE=`oc get node -l node-role.kubernetes.io/master!=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | xargs shuf -n1 -e`
     OTHER_NODE=`oc get node -l node-role.kubernetes.io/master!=true --config admin.kubeconfig -o jsonpath='{.items[*].metadata.name}' | sed "s/$EGRESS_NODE//" | cut -d " " -f1 | tr -d " "`
-    echo $EGRESS_NODE
-    echo $OTHER_NODE
+    echo "EGRESS_NODE=$EGRESS_NODE"
+    echo "OTHER_NODE=$OTHER_NODE"
 }
 
 function clean_up_egressIPs(){
