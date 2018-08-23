@@ -188,7 +188,7 @@ function test_egressip_to_multi_netns(){
     assign_egressIP_to_netns $PROJECT
     assign_egressIP_to_netns project2
     echo -e "$BBlue Check the node network log $NC"
-    ssh root@$EGRESS_NODE "docker ps | grep sdn_sdn | cut -f1 -d ' '| xargs docker logs --tail 200 2>&1 | grep egressip.go"
+    ssh root@$EGRESS_NODE "docker ps | grep sdn_sdn | cut -f1 -d ' '| xargs docker logs --tail 200 2>&1 | grep egressip.go || crictl ps | grep sdn | awk '{print \$1}' | xargs crictl logs --tail 200 2>&1 | grep egressip"
     # sleep sometime to make sure the egressIP ready
     sleep 10
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
@@ -273,18 +273,18 @@ function test_iptables_openflow_rules(){
     step_pass
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
     step_pass
-    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
+    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100|| id=$(crictl ps | grep openvswitch | awk "{print \$1}") ; crictl exec $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
-    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
+    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100 || id=$(crictl ps | grep openvswitch | awk "{print \$1}") ; crictl exec $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
     clean_up_egressIPs
     ssh root@$EGRESS_NODE "iptables -S OPENSHIFT-FIREWALL-ALLOW | grep $EGRESS_IP"
     step_fail
     ssh root@$EGRESS_NODE "iptables -t nat -S OPENSHIFT-MASQUERADE | grep $EGRESS_IP"
     step_fail
-    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100' 
+    ssh root@$EGRESS_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100 || id=$(crictl ps | grep openvswitch | awk "{print \$1}") ; crictl exec $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100' 
     echo -e "\n"
-    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
+    ssh root@$OTHER_NODE 'id=$(docker ps | grep openvswitch | awk -F " " "{print \$1}") ; docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100 || id=$(crictl ps | grep openvswitch | awk "{print \$1}") ; crictl exec $id ovs-ofctl dump-flows br0 -O openflow13 | grep table=100'
     echo -e "\n"
     oc delete all --all -n $PROJECT
     sleep 10
