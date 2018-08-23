@@ -193,6 +193,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     wait_for_pod_running test-rc 2
     oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$EGRESS_IP2\"]}" --config admin.kubeconfig
     # Try to access outside with both project
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
       access_external_network $p $PROJECT 
@@ -200,6 +201,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
       access_external_network $p $PROJECT 
       step_fail
     done
+    pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
       access_external_network $p $NEWPROJECT 
@@ -210,6 +212,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
     # Update the 2nd project to use the 3rd egressIP of project 1
     oc patch netnamespace $NEWPROJECT -p "{\"egressIPs\":[\"$EGRESS_IP3\"]}" --config admin.kubeconfig
     # Try to access outside with both project
+    pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
       access_external_network $p $PROJECT 
@@ -217,6 +220,7 @@ function test_egressip_not_in_first_place_being_used_by_other_project() {
       access_external_network $p $PROJECT 
       step_fail
     done
+    pod=$(oc get po -n $NEWPROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
     do
       access_external_network $p $NEWPROJECT 
