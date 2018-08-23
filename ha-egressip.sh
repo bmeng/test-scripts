@@ -254,6 +254,9 @@ function test_egressip_change_node() {
     # make the 1st node down
     ssh root@$EGRESS_NODE "systemctl stop docker"
     sleep 45
+    # check the egress node is down
+    echo -e "$BBlue Check the network log about the egress node down. $NC"
+    ssh root@$OTHER_NODE "docker logs --tail 200 `docker ps | grep sdn_sdn | awk '{print $1}'` 2>&1 | grep 'egressip\|vxlan_monitor' || crictl logs --tail 200 `crictl ps | grep sdn | awk '{print $1}'`  2>&1 | grep 'egressip\|vxlan_monitor' "
     # Try to access outside again
     pod=$(oc get po -n $PROJECT | grep Running | cut -d' ' -f1)
     for p in ${pod}
