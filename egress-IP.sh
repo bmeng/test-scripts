@@ -428,7 +428,7 @@ function test_access_egressip(){
     assign_egressIP_to_netns $PROJECT
     ssh root@$EGRESS_NODE "hostname"
     step_pass
-    ssh root@$EGRESS_IP "hostname"
+    ssh root@$MASTER_IP "ssh root@$EGRESS_IP hostname"
     step_fail
     clean_up_egressIPs
     sleep 10

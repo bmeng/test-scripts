@@ -287,6 +287,8 @@ function test_egressip_change_node() {
 PROJECT=haegress
 NEWPROJECT=newhaegress
 
+
+set -x
 prepare_user
 clean_node_egressIP
 check_ip
