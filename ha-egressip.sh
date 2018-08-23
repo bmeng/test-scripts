@@ -93,7 +93,7 @@ function access_external_network(){
     echo -e "$BBlue Access external network $NC"
     local pod=$1
     local project=$2
-    oc exec $pod -n $project -- curl -sS --connect-timeout 10 $external_service
+    oc exec $pod -n $project -- curl -sS --connect-timeout 5 $external_service
 }
 
 function step_pass(){
