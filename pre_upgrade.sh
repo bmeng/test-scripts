@@ -158,9 +158,10 @@ function dump_iptables() {
 
 function dump_openflow() {
     echo -e "$BBlue Dump openflow rules into $UPGRADE_DIR. $NC"
-    ssh root@$node "ovs-ofctl dump-flows br0 -O openflow13 2>/dev/null || docker exec openvswitch ovs-ofctl dump-flows br0 -O openflow13" > $UPGRADE_DIR/openflow.dump
+    id=`ssh root@$node "docker ps | grep openvswitch | cut -d ' ' -f1"`
+    ssh root@$node "docker exec -t $id ovs-ofctl dump-flows br0 -O openflow13 2>/dev/null" > $UPGRADE_DIR/openflow.dump
     exit_on_fail
-    ssh root@$node "ovs-vsctl --version 2>/dev/null || docker exec openvswitch ovs-vsctl --version" > $UPGRADE_DIR/ovs.version
+    ssh root@$node "docker exec -t $id ovs-vsctl --version 2>/dev/null" > $UPGRADE_DIR/ovs.version
     exit_on_fail
 }
 
