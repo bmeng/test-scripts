@@ -105,9 +105,9 @@ function create_route() {
     exit_on_fail
     oc create route edge route-edge --service=test-service -n bmengp1
     exit_on_fail
-    oc create route reencrypt route-reen --service=service-secure -n bmengp2
+    oc create route reencrypt route-reen --service=service-secure --hostname=reen-route.example.com -n bmengp2
     exit_on_fail
-    oc create route passthrough route-passthrough --service=service-secure -n bmengp2
+    oc create route passthrough route-passthrough --service=service-secure --hostname=pass-route.example.com -n bmengp2
     exit_on_fail
 }
 
@@ -123,6 +123,7 @@ function create_networkpolicy() {
 
 function create_ingress() {
     echo -e "$BBlue Create ingress in project 1 via admin. $NC"
+    oc env dc/router ROUTER_ENABLE_INGRESS=true $ADMIN
     oc create -f https://raw.githubusercontent.com/openshift-qe/v3-testfiles/master/routing/ingress/test-ingress.json -n bmengp1 $ADMIN
 }
 
